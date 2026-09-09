@@ -1,6 +1,6 @@
 * { box-sizing: border-box; }
 :root { font-family: Inter, system-ui, sans-serif; color: #e8eaf0; background: #0b0d10; font-synthesis: none; text-rendering: optimizeLegibility; }
-body { margin: 0; min-width: 960px; min-height: 100vh; background: #0b0d10; }
+body { margin: 0; min-width: 1180px; min-height: 100vh; background: #0b0d10; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
@@ -34,13 +34,30 @@ code { color: #cbd2de; }
 .brand strong { font-size: 14px; }
 .brand span { color: #737b8b; font-size: 10px; }
 .user-area { gap: 10px; }
-.user-avatar, .message-avatar { display: grid; place-items: center; border: 1px solid #363d49; background: #1a1f27; border-radius: 50%; font-weight: 800; }
+.system-role-badge { border: 1px solid #3a414e; border-radius: 999px; padding: 5px 8px; color: #aeb5c2; font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.system-role-badge.owner { border-color: #806a34; color: #f0d48a; background: #211b0f; }
+.system-role-badge.admin { border-color: #4a5970; color: #b9c9df; }
+.system-role-badge.moderator { border-color: #604b3e; color: #d8b59e; }
+.user-avatar, .message-avatar, .member-avatar { display: grid; place-items: center; border: 1px solid #363d49; background: #1a1f27; border-radius: 50%; font-weight: 800; }
 .user-avatar { width: 30px; height: 30px; font-size: 12px; }
 .user-copy { display: grid; gap: 1px; }
 .user-copy strong { font-size: 12px; }
 .user-copy span { color: #737b8b; font-size: 10px; }
 .ghost-button { border: 1px solid #2b313c; border-radius: 8px; background: transparent; color: #aeb5c2; padding: 7px 10px; font-size: 12px; }
-.workspace-body { min-height: 0; display: grid; grid-template-columns: 245px minmax(0, 1fr); }
+.workspace-body { min-height: 0; display: grid; grid-template-columns: 245px minmax(0, 1fr) 245px; }
+.member-sidebar { min-height: 0; overflow: auto; border-left: 1px solid #252a33; background: #0f1217; padding: 18px 12px; }
+.member-heading { display: flex; align-items: center; justify-content: space-between; padding: 0 7px 16px; color: #737b8b; }
+.member-heading strong { font-size: 11px; }
+.member-group { margin-bottom: 18px; }
+.member-group-title { padding: 0 7px 7px; color: #737b8b; font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.member-row { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 7px; border-radius: 8px; }
+.member-row.current-user { background: #171b22; }
+.member-avatar { flex: 0 0 27px; width: 27px; height: 27px; font-size: 10px; }
+.member-copy { min-width: 0; display: grid; gap: 1px; }
+.member-copy strong { overflow: hidden; color: #dce0e7; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.member-copy span { overflow: hidden; color: #626b7a; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.owner-badge { margin-left: auto; color: #d8bd70; font-size: 7px; font-weight: 900; letter-spacing: .08em; }
+
 .room-sidebar { min-height: 0; border-right: 1px solid #252a33; background: #0f1217; padding: 18px 12px; }
 .sidebar-heading { justify-content: space-between; padding: 0 7px 14px; }
 .sidebar-heading h2 { margin: 4px 0 0; font-size: 17px; }

@@ -7,7 +7,7 @@ import {
   type AuthApi,
   type HyperoomRepository,
 } from "@hyperoom/data";
-import type { HyperoomMessage, HyperoomProfile, HyperoomRoom } from "@hyperoom/shared";
+import type { HyperoomMessage, HyperoomProfile, HyperoomRoom, HyperoomRoomMemberProfile } from "@hyperoom/shared";
 import "./styles.css";
 
 const supabaseConfig = {
@@ -49,12 +49,9 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
     setNotice(null);
     try {
       if (mode === "sign-in") {
-        await auth.signIn(phone, password);
+        await auth.signIn(nickname, password);
       } else {
-        const session = await auth.signUp(phone, password, nickname, nickname);
-        if (!session) {
-          setNotice("Account created. You can sign in with your phone number and password.");
-        }
+        await auth.signUp(phone, password, nickname, nickname);
       }
     } catch (submitError) {
       setError(friendlyError(submitError));
@@ -69,10 +66,10 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
         <div className="brand-mark">H</div>
         <p className="eyebrow">HYPEROOM · REAL CORE</p>
         <h1>{mode === "sign-in" ? "Welcome back" : "Create your account"}</h1>
-        <p className="muted">Sign in with your Hyperoom nickname, phone number, and password.</p>
+        <p className="muted">One door for everyone. Your account role is determined by Hyperoom.</p>
         <form onSubmit={submit} className="stack">
-          {mode === "sign-up" && <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="nickname" /></label>}
-          <label>Phone number<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+62812..." autoComplete="tel" /></label>
+          <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="username" /></label>
+          {mode === "sign-up" && <label>Phone number<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="0812... or +62812..." autoComplete="tel" /></label>}
           <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} /></label>
           {error && <div className="error-box">{error}</div>}
           {notice && <div className="notice-box">{notice}</div>}
@@ -192,6 +189,38 @@ function ChatRoom({ repository, room, profile }: { repository: HyperoomRepositor
   </section>;
 }
 
+function MemberSidebar({ repository, room, viewer }: { repository: HyperoomRepository; room: HyperoomRoom | null; viewer: HyperoomProfile }): React.JSX.Element {
+  const [members, setMembers] = useState<HyperoomRoomMemberProfile[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!room) { setMembers([]); return; }
+    let cancelled = false;
+    setError(null);
+    void repository.listMemberProfiles(room.id).then((items) => { if (!cancelled) setMembers(items); }).catch((loadError) => { if (!cancelled) setError(friendlyError(loadError)); });
+    return () => { cancelled = true; };
+  }, [repository, room?.id]);
+
+  const groups = [
+    { key: "owner", label: "👑 OWNER" },
+    { key: "admin", label: "🛡 ADMIN" },
+    { key: "moderator", label: "🔨 MODERATOR" },
+    { key: "voice", label: "🎤 VOICE" },
+    { key: "member", label: "MEMBERS" },
+  ];
+
+  function effectiveRole(item: HyperoomRoomMemberProfile) {
+    if (item.profile.systemRole !== "member") return item.profile.systemRole;
+    return item.role === "voice" ? "voice" : "member";
+  }
+
+  return <aside className="member-sidebar"><div className="member-heading"><span className="eyebrow">MEMBERS</span><strong>{members.length}</strong></div>{error && <div className="sidebar-error">{error}</div>}{groups.map((group) => {
+    const items = members.filter((item) => effectiveRole(item) === group.key);
+    if (!items.length) return null;
+    return <section className="member-group" key={group.key}><div className="member-group-title">{group.label}</div>{items.map((item) => <div className={`member-row ${item.profile.id === viewer.id ? "current-user" : ""}`} key={item.userId}><div className="member-avatar">{item.profile.displayName.slice(0, 1).toUpperCase()}</div><div className="member-copy"><strong>{item.profile.displayName}</strong><span>@{item.profile.username}</span></div>{item.profile.systemRole === "owner" && <span className="owner-badge">OWNER</span>}</div>)}</section>;
+  })}</aside>;
+}
+
 function Workspace({ auth, repository, session }: { auth: AuthApi; repository: HyperoomRepository; session: NonNullable<Session> }): React.JSX.Element {
   const [profile, setProfile] = useState<HyperoomProfile | null>(null);
   const [rooms, setRooms] = useState<HyperoomRoom[]>([]);
@@ -217,8 +246,8 @@ function Workspace({ auth, repository, session }: { auth: AuthApi; repository: H
   }
 
   return <main className="workspace">
-    <header className="topbar"><div className="brand"><div className="brand-mark small">H</div><div><strong>Hyperoom</strong><span>mIRC DNA · native core</span></div></div><div className="user-area"><div className="user-avatar">{profile.displayName.slice(0, 1).toUpperCase()}</div><div className="user-copy"><strong>{profile.displayName}</strong><span>@{profile.username}</span></div><button className="ghost-button" onClick={() => void signOut()}>Sign out</button></div></header>
-    <div className="workspace-body"><RoomSidebar repository={repository} rooms={rooms} activeRoom={activeRoom} onSelect={setActiveRoom} onRooms={setRooms} /><section className="main-panel">{error && <div className="global-error">{error}</div>}{loadingRooms ? <div className="empty-panel">Loading rooms…</div> : activeRoom ? <ChatRoom repository={repository} room={activeRoom} profile={profile} /> : <div className="empty-panel"><div className="empty-icon">#</div><h2>No room yet</h2><p>Create a public room from the sidebar to start chatting.</p></div>}</section></div>
+    <header className="topbar"><div className="brand"><div className="brand-mark small">H</div><div><strong>Hyperoom</strong><span>mIRC DNA · native core</span></div></div><div className="user-area"><div className={`system-role-badge ${profile.systemRole}`}>{profile.systemRole === "owner" ? "👑 OWNER" : profile.systemRole.toUpperCase()}</div><div className="user-avatar">{profile.displayName.slice(0, 1).toUpperCase()}</div><div className="user-copy"><strong>{profile.displayName}</strong><span>@{profile.username}</span></div><button className="ghost-button" onClick={() => void signOut()}>Sign out</button></div></header>
+    <div className="workspace-body"><RoomSidebar repository={repository} rooms={rooms} activeRoom={activeRoom} onSelect={setActiveRoom} onRooms={setRooms} /><section className="main-panel">{error && <div className="global-error">{error}</div>}{loadingRooms ? <div className="empty-panel">Loading rooms…</div> : activeRoom ? <ChatRoom repository={repository} room={activeRoom} profile={profile} /> : <div className="empty-panel"><div className="empty-icon">#</div><h2>No room yet</h2><p>Create a public room from the sidebar to start chatting.</p></div>}</section><MemberSidebar repository={repository} room={activeRoom} viewer={profile} /></div>
   </main>;
 }
 

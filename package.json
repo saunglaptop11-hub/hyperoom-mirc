@@ -12,7 +12,8 @@
     "build": "npm run build -w @hyperoom/shared && npm run build -w @hyperoom/data && npm run build -w @hyperoom/irc-engine && npm run build -w @hyperoom/desktop",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "bootstrap:owner": "node scripts/bootstrap-owner.mjs"
   },
   "engines": {
     "node": ">=22"

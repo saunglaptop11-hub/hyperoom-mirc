@@ -1,9 +1,11 @@
 export type HyperoomRoomType = "public" | "private" | "dm" | "group";
+export type HyperoomPlatformRole = "owner" | "admin" | "moderator" | "member";
 export type HyperoomMemberRole = "owner" | "admin" | "operator" | "voice" | "member";
 export type MessageKind = "text" | "action" | "system";
 
 export interface HyperoomProfile {
   id: string;
+  systemRole: HyperoomPlatformRole;
   username: string;
   displayName: string;
   avatarUrl: string | null;
@@ -29,6 +31,10 @@ export interface HyperoomRoomMember {
   userId: string;
   role: HyperoomMemberRole;
   joinedAt: string;
+}
+
+export interface HyperoomRoomMemberProfile extends HyperoomRoomMember {
+  profile: HyperoomProfile;
 }
 
 export interface HyperoomMessage {

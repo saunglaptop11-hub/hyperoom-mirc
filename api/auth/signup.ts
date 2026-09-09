@@ -41,6 +41,7 @@ export default async function handler(request: Request): Promise<Response> {
     id: data.user.id,
     username,
     display_name: nickname,
+    system_role: "member",
   });
   if (profileError) {
     await admin.auth.admin.deleteUser(data.user.id);

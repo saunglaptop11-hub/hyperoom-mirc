@@ -1,5 +1,5 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import type { HyperoomMessage, HyperoomProfile, HyperoomReaction, HyperoomRoom, HyperoomRoomMember } from "@hyperoom/shared";
+import type { HyperoomMessage, HyperoomProfile, HyperoomReaction, HyperoomRoom, HyperoomRoomMember, HyperoomRoomMemberProfile } from "@hyperoom/shared";
 import type { HyperoomSupabaseClient } from "./client";
 import type { Database } from "./database.types";
 
@@ -8,7 +8,7 @@ export interface SendMessageInput { roomId: string; content: string; kind?: Data
 export interface RealtimeHandlers { onMessage?: (message: HyperoomMessage) => void; onMessageUpdated?: (message: HyperoomMessage) => void; onReaction?: (reaction: HyperoomReaction, removed: boolean) => void; onMemberChange?: (member: HyperoomRoomMember, removed: boolean) => void }
 
 function profile(row: Database["public"]["Tables"]["profiles"]["Row"]): HyperoomProfile {
-  return { id: row.id, username: row.username, displayName: row.display_name, avatarUrl: row.avatar_url, bio: row.bio, statusText: row.status_text, lastSeenAt: row.last_seen_at, createdAt: row.created_at, updatedAt: row.updated_at };
+  return { id: row.id, systemRole: row.system_role, username: row.username, displayName: row.display_name, avatarUrl: row.avatar_url, bio: row.bio, statusText: row.status_text, lastSeenAt: row.last_seen_at, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 function room(row: Database["public"]["Tables"]["rooms"]["Row"]): HyperoomRoom {
   return { id: row.id, name: row.name, type: row.type, description: row.description, createdBy: row.created_by, createdAt: row.created_at, updatedAt: row.updated_at };
@@ -31,6 +31,7 @@ export interface HyperoomRepository {
   joinRoom(roomId: string, userId?: string): Promise<HyperoomRoomMember>;
   leaveRoom(roomId: string, userId?: string): Promise<void>;
   listMembers(roomId: string): Promise<HyperoomRoomMember[]>;
+  listMemberProfiles(roomId: string): Promise<HyperoomRoomMemberProfile[]>;
   listMessages(roomId: string, limit?: number): Promise<HyperoomMessage[]>;
   sendMessage(input: SendMessageInput, userId?: string): Promise<HyperoomMessage>;
   editMessage(messageId: string, content: string): Promise<HyperoomMessage>;
@@ -108,6 +109,18 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
       const { data, error } = await client.from("room_members").select("*").eq("room_id", roomId).order("joined_at");
       if (error) throw error;
       return data.map(member);
+    },
+    async listMemberProfiles(roomId) {
+      const members = await this.listMembers(roomId);
+      const ids = members.map((item) => item.userId);
+      if (!ids.length) return [];
+      const { data, error } = await client.from("profiles").select("*").in("id", ids);
+      if (error) throw error;
+      const profiles = new Map(data.map((row) => [row.id, profile(row)]));
+      return members.flatMap((item) => {
+        const current = profiles.get(item.userId);
+        return current ? [{ ...item, profile: current }] : [];
+      });
     },
     async listMessages(roomId, limit = 50) {
       const safeLimit = Math.max(1, Math.min(limit, 100));

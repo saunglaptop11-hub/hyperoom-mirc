@@ -1,11 +1,11 @@
-import type { HyperoomMemberRole, HyperoomRoomType, MessageKind } from "@hyperoom/shared";
+import type { HyperoomMemberRole, HyperoomPlatformRole, HyperoomRoomType, MessageKind } from "@hyperoom/shared";
 
 export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; username: string; display_name: string; avatar_url: string | null; bio: string | null; status_text: string | null; last_seen_at: string | null; created_at: string; updated_at: string };
-        Insert: { id: string; username: string; display_name: string; avatar_url?: string | null; bio?: string | null; status_text?: string | null; last_seen_at?: string | null };
+        Row: { id: string; system_role: HyperoomPlatformRole; username: string; display_name: string; avatar_url: string | null; bio: string | null; status_text: string | null; last_seen_at: string | null; created_at: string; updated_at: string };
+        Insert: { id: string; system_role?: HyperoomPlatformRole; username: string; display_name: string; avatar_url?: string | null; bio?: string | null; status_text?: string | null; last_seen_at?: string | null };
         Update: { username?: string; display_name?: string; avatar_url?: string | null; bio?: string | null; status_text?: string | null; last_seen_at?: string | null };
         Relationships: [];
       };
@@ -36,7 +36,7 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: { room_type: HyperoomRoomType; member_role: HyperoomMemberRole; message_kind: MessageKind };
+    Enums: { room_type: HyperoomRoomType; platform_role: HyperoomPlatformRole; member_role: HyperoomMemberRole; message_kind: MessageKind };
     CompositeTypes: Record<string, never>;
   };
 }
