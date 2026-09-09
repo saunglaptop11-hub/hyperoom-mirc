@@ -34,12 +34,13 @@ type AuthMode = "sign-in" | "sign-up";
 
 function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
   const [mode, setMode] = useState<AuthMode>("sign-in");
-  const [email, setEmail] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [confirmationPending, setConfirmationPending] = useState(false);
+
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,30 +49,15 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
     setNotice(null);
     try {
       if (mode === "sign-in") {
-        await auth.signIn(email, password);
+        await auth.signIn(phone, password);
       } else {
-        const redirectTo = window.location.origin;
-        const session = await auth.signUp(email, password, redirectTo);
+        const session = await auth.signUp(phone, password, nickname, nickname);
         if (!session) {
-          setConfirmationPending(true);
-          setNotice("Account created. Open the confirmation email, then return here. The link will finish sign-in automatically.");
+          setNotice("Account created. You can sign in with your phone number and password.");
         }
       }
     } catch (submitError) {
       setError(friendlyError(submitError));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function resendConfirmation() {
-    setBusy(true);
-    setError(null);
-    try {
-      await auth.resendSignupConfirmation(email, window.location.origin);
-      setNotice("Confirmation email sent again. Check your inbox and spam folder.");
-    } catch (resendError) {
-      setError(friendlyError(resendError));
     } finally {
       setBusy(false);
     }
@@ -83,16 +69,17 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
         <div className="brand-mark">H</div>
         <p className="eyebrow">HYPEROOM · REAL CORE</p>
         <h1>{mode === "sign-in" ? "Welcome back" : "Create your account"}</h1>
-        <p className="muted">Native Hyperoom authentication powered by Supabase.</p>
+        <p className="muted">Sign in with your Hyperoom nickname, phone number, and password.</p>
         <form onSubmit={submit} className="stack">
-          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" /></label>
+          {mode === "sign-up" && <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="nickname" /></label>}
+          <label>Phone number<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+62812..." autoComplete="tel" /></label>
           <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} /></label>
           {error && <div className="error-box">{error}</div>}
           {notice && <div className="notice-box">{notice}</div>}
-          {confirmationPending && mode === "sign-up" && <button type="button" className="ghost-button" onClick={() => void resendConfirmation()} disabled={busy}>Resend confirmation email</button>}
+
           <button className="primary-button" disabled={busy}>{busy ? "Connecting…" : mode === "sign-in" ? "Sign in" : "Create account"}</button>
         </form>
-        <button className="link-button" onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setError(null); setNotice(null); setConfirmationPending(false); }}>
+        <button className="link-button" onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setError(null); setNotice(null); }}>
           {mode === "sign-in" ? "Need an account? Create one" : "Already have an account? Sign in"}
         </button>
       </section>
@@ -112,11 +99,11 @@ function ProfileBootstrap({ repository, session, onReady }: { repository: Hypero
         if (existing) { if (!cancelled) onReady(existing); return; }
         const metadata = session.user.user_metadata as Record<string, unknown> | undefined;
         const metadataUsername = typeof metadata?.username === "string" ? metadata.username : "";
-        const emailPrefix = session.user.email?.split("@")[0] ?? "user";
-        const base = (metadataUsername || emailPrefix).trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 24) || "user";
+        const phoneSuffix = session.user.phone?.replace(/\D/g, "").slice(-8) || "user";
+        const base = (metadataUsername || `user_${phoneSuffix}`).trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 24) || "user";
         if (!cancelled) {
           setSaving(true);
-          const created = await repository.upsertProfile({ id: session.user.id, username: base, displayName: metadata?.display_name as string || emailPrefix || base });
+          const created = await repository.upsertProfile({ id: session.user.id, username: base, displayName: metadata?.display_name as string || metadataUsername || base });
           onReady(created);
         }
       } catch (bootstrapError) {
@@ -126,7 +113,7 @@ function ProfileBootstrap({ repository, session, onReady }: { repository: Hypero
       }
     })();
     return () => { cancelled = true; };
-  }, [onReady, repository, session.user.email, session.user.id, session.user.user_metadata]);
+  }, [onReady, repository, session.user.id, session.user.user_metadata]);
 
   return <main className="center-shell"><section className="status-card"><div className="spinner" /><h2>{saving ? "Creating your profile…" : "Loading your profile…"}</h2>{error && <div className="error-box">{error}</div>}</section></main>;
 }

@@ -1,33 +1,45 @@
-# Phase 1C — Auth Confirmation
+# Phase 1C — Phone Authentication
 
-## Real flow
+## Real registration flow
 
-Hyperoom uses Supabase Auth with email/password. When email confirmation is enabled, signup intentionally returns no session until the user confirms the email.
+Hyperoom does not require an email address for account registration.
 
-The desktop app now sends the browser origin as `emailRedirectTo`. After confirmation, Supabase returns to the app and the existing `detectSessionInUrl` plus auth-state listener restores the session.
+Registration uses exactly:
+
+1. Nickname / nama panggilan
+2. Nomor telepon
+3. Password
+
+Supabase Auth stores the phone credential. The nickname is stored in the
+authenticated user's metadata and becomes the Hyperoom profile username/display name.
+
+## Login
+
+Login uses:
+
+- Nomor telepon
+- Password
+
+The nickname is not used as a credential; it is the user's public identity in Hyperoom.
 
 ## Required Supabase Auth settings
 
-In Supabase Dashboard → Authentication → URL Configuration, allow these development origins:
+1. Enable **Phone** as an Auth provider.
+2. Configure an SMS provider if phone confirmation/OTP is enabled.
+3. If the product requirement is instant account creation without OTP, keep phone
+   confirmation disabled. This means the phone number is a login identifier, not
+   proof of phone ownership.
+4. Email authentication is not required by the Hyperoom client.
 
-- `http://127.0.0.1:5173/**`
-- `http://localhost:5173/**`
+## Smoke test
 
-Also allow the production Hyperoom origin when deployed:
+1. Open the Hyperoom deployment.
+2. Choose **Create account**.
+3. Enter nickname, phone number, and password only.
+4. Create the account.
+5. Confirm the authenticated session is restored.
+6. Confirm the profile row contains the nickname.
+7. Create/join a room and send a real message.
+8. Sign out, then sign back in using phone + password.
 
-- `https://hyperoom.ngulikpc.online/**`
-
-Keep the Site URL set to the primary production origin.
-
-## User flow
-
-1. Create account.
-2. Supabase sends the confirmation email.
-3. User opens the email link.
-4. Supabase redirects back to Hyperoom.
-5. Hyperoom restores the authenticated session.
-6. Profile bootstrap runs.
-7. Public rooms load.
-8. Room membership and chat continue through the real repository/RLS layer.
-
-The auth UI also exposes a real resend-confirmation action. No fake confirmation state is used.
+No email confirmation flow is used by the application.
