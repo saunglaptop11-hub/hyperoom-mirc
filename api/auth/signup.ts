@@ -22,10 +22,10 @@ function authEmailFromPhone(phone: string): string {
   return `hp_${phone.replace(/\D/g, "")}@auth.hyperoom.local`;
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function signupHandler(request: Request, env = process.env): Promise<Response> {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
-  const url = process.env.VITE_SUPABASE_URL;
-  const secret = process.env.SUPABASE_SECRET_KEY;
+  const url = env.VITE_SUPABASE_URL;
+  const secret = env.SUPABASE_SECRET_KEY;
   if (!url || !secret) return json({ error: "Auth server is not configured." }, 500);
   let body: { phone?: string; password?: string; username?: string; displayName?: string };
   try { body = await request.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
@@ -56,4 +56,8 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: identifierError.code === "23505" ? "That phone number is already registered." : identifierError.message }, 409);
   }
   return json({ ok: true, userId: data.user.id });
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return signupHandler(request, process.env);
 }

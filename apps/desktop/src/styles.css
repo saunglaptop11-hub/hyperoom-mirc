@@ -99,3 +99,9 @@ code { color: #cbd2de; }
 .empty-panel p { margin: 0; }
 .empty-icon { width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid #303743; border-radius: 14px; color: #8992a1; font-size: 23px; }
 .config-card p { line-height: 1.6; }
+
+.system-message { max-width: none; margin: 8px 0 14px; justify-content: center; }
+.system-message .message-body { color: #77808f; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.system-message .message-body time { margin-left: 10px; color: #4f5866; font-size: 9px; }
+.system-event { white-space: pre-wrap; }
+.system-error { color: #e7b8b8; white-space: pre-wrap; }

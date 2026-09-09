@@ -1,4 +1,4 @@
-import type { HyperoomMemberRole, HyperoomPlatformRole, HyperoomRoomType, MessageKind } from "@hyperoom/shared";
+import type { HyperoomMemberRole, HyperoomMessageEventType, HyperoomPlatformRole, HyperoomRoomType, MessageKind } from "@hyperoom/shared";
 
 export interface Database {
   public: {
@@ -10,9 +10,9 @@ export interface Database {
         Relationships: [];
       };
       rooms: {
-        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; created_by: string; created_at: string; updated_at: string };
-        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; created_by: string };
-        Update: { name?: string; type?: HyperoomRoomType; description?: string | null };
+        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null; created_by: string; created_at: string; updated_at: string };
+        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; created_by: string };
+        Update: { name?: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null };
         Relationships: [];
       };
       room_members: {
@@ -22,9 +22,9 @@ export interface Database {
         Relationships: [];
       };
       messages: {
-        Row: { id: string; room_id: string; sender_id: string; kind: MessageKind; content: string; reply_to_message_id: string | null; created_at: string; edited_at: string | null; deleted_at: string | null };
-        Insert: { id?: string; room_id: string; sender_id: string; kind?: MessageKind; content: string; reply_to_message_id?: string | null };
-        Update: { content?: string; edited_at?: string | null; deleted_at?: string | null };
+        Row: { id: string; room_id: string; sender_id: string; kind: MessageKind; event_type: HyperoomMessageEventType | null; content: string; reply_to_message_id: string | null; created_at: string; edited_at: string | null; deleted_at: string | null };
+        Insert: { id?: string; room_id: string; sender_id: string; kind?: MessageKind; event_type?: HyperoomMessageEventType | null; content: string; reply_to_message_id?: string | null };
+        Update: { content?: string; edited_at?: string | null; deleted_at?: string | null; event_type?: HyperoomMessageEventType | null };
         Relationships: [];
       };
       message_reactions: {
@@ -36,7 +36,7 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: { room_type: HyperoomRoomType; platform_role: HyperoomPlatformRole; member_role: HyperoomMemberRole; message_kind: MessageKind };
+    Enums: { room_type: HyperoomRoomType; platform_role: HyperoomPlatformRole; member_role: HyperoomMemberRole; message_kind: MessageKind; message_event_type: HyperoomMessageEventType };
     CompositeTypes: Record<string, never>;
   };
 }

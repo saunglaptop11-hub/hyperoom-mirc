@@ -9,12 +9,12 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @hyperoom/desktop",
-    "build": "npm run build -w @hyperoom/shared && npm run build -w @hyperoom/data && npm run build -w @hyperoom/irc-engine && npm run build -w @hyperoom/desktop",
+    "build": "npm run build -w @hyperoom/shared && npm run build -w @hyperoom/data && npm run build -w @hyperoom/irc-engine && npm run build -w @hyperoom/chat-engine && npm run build -w @hyperoom/desktop",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "bootstrap:owner": "node --env-file=.env.local scripts/bootstrap-owner.mjs",
-    "migrate:auth": "node scripts/migrate-phone-auth-to-internal-email.mjs"
+    "migrate:auth": "node --env-file=.env.local scripts/migrate-phone-auth-to-internal-email.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -61,3 +61,7 @@ export async function loginHandler(request: Request, env = process.env): Promise
   if (error || !data.session) return json({ error: "Invalid nickname or password." }, 401);
   return json({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
 }
+
+export async function POST(request: Request): Promise<Response> {
+  return loginHandler(request, process.env);
+}

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hyperoom/data": "file:../../packages/data",
+    "@hyperoom/chat-engine": "file:../../packages/chat-engine",
     "@hyperoom/irc-engine": "file:../../packages/irc-engine",
     "@hyperoom/shared": "file:../../packages/shared",
     "@vitejs/plugin-react": "latest",
