@@ -1,0 +1,19 @@
+{
+  "name": "@hyperoom/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "eslint": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@hyperoom/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@hyperoom/data": "file:../../packages/data",
+    "@hyperoom/irc-engine": "file:../../packages/irc-engine",
+    "@hyperoom/shared": "file:../../packages/shared",
+    "@vitejs/plugin-react": "latest",
+    "electron": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest",
+    "eslint": "latest"
+  }
+}

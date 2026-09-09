@@ -1,0 +1,23 @@
+{
+  "name": "@hyperoom/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@hyperoom/shared": "file:../shared",
+    "@supabase/supabase-js": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "vitest": "latest",
+    "eslint": "latest"
+  }
+}

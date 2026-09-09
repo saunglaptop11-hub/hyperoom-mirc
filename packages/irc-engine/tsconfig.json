@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@hyperoom/shared": ["../shared/dist/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}
