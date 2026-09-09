@@ -73,7 +73,7 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
         <form onSubmit={submit} className="stack">
           {mode === "sign-up" && <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="nickname" /></label>}
           <label>Phone number<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+62812..." autoComplete="tel" /></label>
-          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} /></label>
+          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} /></label>
           {error && <div className="error-box">{error}</div>}
           {notice && <div className="notice-box">{notice}</div>}
 
