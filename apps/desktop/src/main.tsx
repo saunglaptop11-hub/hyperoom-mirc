@@ -68,7 +68,7 @@ function AuthScreen({ auth }: { auth: AuthApi }): React.JSX.Element {
         <h1>{mode === "sign-in" ? "Welcome back" : "Create your account"}</h1>
         <p className="muted">One door for everyone. Your account role is determined by Hyperoom.</p>
         <form onSubmit={submit} className="stack">
-          <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="username" /></label>
+          <label>{mode === "sign-in" ? "Nickname / Phone number" : "Nickname"}<input value={nickname} onChange={(e) => setNickname(e.target.value)} required minLength={2} maxLength={24} autoComplete="username" /></label>
           {mode === "sign-up" && <label>Phone number<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="0812... or +62812..." autoComplete="tel" /></label>}
           <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} /></label>
           {error && <div className="error-box">{error}</div>}

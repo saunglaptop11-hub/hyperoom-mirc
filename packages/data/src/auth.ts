@@ -3,7 +3,7 @@ import type { HyperoomSupabaseClient } from "./client";
 
 export interface AuthApi {
   getSession(): Promise<Session | null>;
-  signIn(nickname: string, password: string): Promise<Session>;
+  signIn(identifier: string, password: string): Promise<Session>;
   signUp(phone: string, password: string, username: string, displayName: string): Promise<Session>;
   signOut(): Promise<void>;
   onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void): () => void;
@@ -22,6 +22,7 @@ async function parseResponse(response: Response): Promise<Record<string, unknown
   if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Authentication failed.");
   return payload;
 }
+
 export function createAuthApi(client: HyperoomSupabaseClient): AuthApi {
   return {
     async getSession() {
@@ -29,11 +30,11 @@ export function createAuthApi(client: HyperoomSupabaseClient): AuthApi {
       if (error) throw error;
       return data.session;
     },
-    async signIn(nickname, password) {
+    async signIn(identifier, password) {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ nickname: nickname.trim(), password }),
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
       const payload = await parseResponse(response);
       const accessToken = typeof payload.access_token === "string" ? payload.access_token : "";
