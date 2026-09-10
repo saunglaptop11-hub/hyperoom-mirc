@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   createAuthApi,
@@ -192,6 +192,14 @@ function Workspace({ auth, repository, session }: { auth: AuthApi; repository: H
   const [profile, setProfile] = useState<HyperoomProfile | null>(null); const [memberProfiles, setMemberProfiles] = useState<HyperoomRoomMemberProfile[]>([]); const [rooms, setRooms] = useState<HyperoomRoom[]>([]); const [activeRoom, setActiveRoom] = useState<HyperoomRoom | null>(null); const [loadingRooms, setLoadingRooms] = useState(false); const [error, setError] = useState<string | null>(null);
   const onProfileReady = useMemo(() => (next: HyperoomProfile) => setProfile(next), []);
   const commandEngine = useMemo(() => profile ? createHyperoomCommandEngine({ repository, auth, getProfile: () => profile }) : null, [auth, profile, repository]);
+  const handleRoomUpdated = useCallback((next: HyperoomRoom) => {
+    setActiveRoom(next);
+    setRooms((current) => current.map((item) => item.id === next.id ? next : item));
+  }, []);
+  const handleProfileUpdated = useCallback((next: HyperoomProfile) => {
+    setProfile(next);
+    setMemberProfiles((current) => current.map((item) => item.userId === next.id ? { ...item, profile: next } : item));
+  }, []);
   useEffect(() => {
     if (!profile) return;
     let cancelled = false;
@@ -208,7 +216,7 @@ function Workspace({ auth, repository, session }: { auth: AuthApi; repository: H
   if (!profile) return <ProfileBootstrap repository={repository} session={session} onReady={onProfileReady}/>;
   async function signOut() { try { await auth.signOut(); } catch (e) { setError(friendlyError(e)); } }
   function selectAfterPart(roomId: string) { setMemberProfiles([]); setActiveRoom(rooms.find((item) => item.id !== roomId) ?? null); }
-  return <main className="workspace"><header className="topbar"><div className="brand"><div className="brand-mark small">H</div><div><strong>Hyperoom</strong><span>mIRC DNA - native core</span></div></div><div className="user-area"><div className={`system-role-badge ${profile.systemRole}`}>{profile.systemRole === "owner" ? "OWNER" : profile.systemRole.toUpperCase()}</div><div className="user-avatar">{profile.displayName.slice(0, 1).toUpperCase()}</div><div className="user-copy"><strong>{profile.displayName}</strong><span>@{profile.username}</span></div><button className="ghost-button" onClick={() => void signOut()}>Sign out</button></div></header><div className="workspace-body"><RoomSidebar repository={repository} rooms={rooms} activeRoom={activeRoom} onSelect={setActiveRoom} onRooms={setRooms}/><section className="main-panel">{error && <div className="global-error">{error}</div>}{loadingRooms ? <div className="empty-panel">Loading rooms...</div> : activeRoom && commandEngine ? <ChatRoom repository={repository} chatEngine={chatEngine} commandEngine={commandEngine} room={activeRoom} profile={profile} onSelectRoom={setActiveRoom} onRoomUpdated={(next) => { setActiveRoom(next); setRooms((current) => current.map((item) => item.id === next.id ? next : item)); }} onProfileUpdated={(next) => { setProfile(next); setMemberProfiles((current) => current.map((item) => item.userId === next.id ? { ...item, profile: next } : item)); }} onMembersUpdated={setMemberProfiles} onPart={selectAfterPart}/> : <div className="empty-panel"><div className="empty-icon">#</div><h2>No room yet</h2><p>Create or join a public channel from the sidebar.</p></div>}</section><MemberSidebar members={memberProfiles} viewer={profile}/></div></main>;
+  return <main className="workspace"><header className="topbar"><div className="brand"><div className="brand-mark small">H</div><div><strong>Hyperoom</strong><span>mIRC DNA - native core</span></div></div><div className="user-area"><div className={`system-role-badge ${profile.systemRole}`}>{profile.systemRole === "owner" ? "OWNER" : profile.systemRole.toUpperCase()}</div><div className="user-avatar">{profile.displayName.slice(0, 1).toUpperCase()}</div><div className="user-copy"><strong>{profile.displayName}</strong><span>@{profile.username}</span></div><button className="ghost-button" onClick={() => void signOut()}>Sign out</button></div></header><div className="workspace-body"><RoomSidebar repository={repository} rooms={rooms} activeRoom={activeRoom} onSelect={setActiveRoom} onRooms={setRooms}/><section className="main-panel">{error && <div className="global-error">{error}</div>}{loadingRooms ? <div className="empty-panel">Loading rooms...</div> : activeRoom && commandEngine ? <ChatRoom repository={repository} chatEngine={chatEngine} commandEngine={commandEngine} room={activeRoom} profile={profile} onSelectRoom={setActiveRoom} onRoomUpdated={handleRoomUpdated} onProfileUpdated={handleProfileUpdated} onMembersUpdated={setMemberProfiles} onPart={selectAfterPart}/> : <div className="empty-panel"><div className="empty-icon">#</div><h2>No room yet</h2><p>Create or join a public channel from the sidebar.</p></div>}</section><MemberSidebar members={memberProfiles} viewer={profile}/></div></main>;
 }
 
 function App(): React.JSX.Element {
