@@ -39,6 +39,7 @@ export function createHyperoomCommandEngine(deps: {
     const access = await deps.repository.joinRoomByName(args[0]!);
     if (access.status === "not_found") return { kind: "ERROR", content: `Channel not found: ${args[0]}` };
     if (access.status === "locked") return { kind: "ERROR", content: `*** #${args[0]!.replace(/^#/, "")} is locked.\n*** You need an invitation to join this room.` };
+    if (access.status === "banned") return { kind: "ERROR", content: `*** You are banned from #${args[0]!.replace(/^#/, "")}.` };
     if (!access.room) return { kind: "ERROR", content: "Channel access could not be resolved." };
     await deps.repository.joinRoom(access.room.id);
     return { kind: "SUCCESS", content: `Joined #${access.room.name}`, room: access.room, data: { action: "switch-room" } };
@@ -92,6 +93,24 @@ export function createHyperoomCommandEngine(deps: {
       return { kind: "SUCCESS", content: result.reason ? `*** ${result.action} ${result.targetUsername}: ${result.reason}` : `*** ${result.action} ${result.targetUsername}.` };
     } });
   }
+
+  registry.register({ name: "op", usage: "/op <nick>", description: "Grant room operator to a member (Room Owner or Platform Owner).", handler: async (args, context) => {
+    const room = requireRoom(context); if (args.length !== 1) return { kind: "ERROR", content: "Usage: /op <nick>" };
+    await deps.repository.setRoomOperator(room.id, args[0]!, true);
+    return { kind: "SUCCESS", content: `*** ${args[0]!.replace(/^@/, "")} is now an operator in #${room.name}.` };
+  } });
+
+  registry.register({ name: "deop", usage: "/deop <nick>", description: "Revoke room operator from a member (Room Owner or Platform Owner).", handler: async (args, context) => {
+    const room = requireRoom(context); if (args.length !== 1) return { kind: "ERROR", content: "Usage: /deop <nick>" };
+    await deps.repository.setRoomOperator(room.id, args[0]!, false);
+    return { kind: "SUCCESS", content: `*** ${args[0]!.replace(/^@/, "")} is no longer an operator in #${room.name}.` };
+  } });
+
+  registry.register({ name: "owner", usage: "/owner <nick>", description: "Transfer Room Ownership (Room Owner or Platform Owner).", handler: async (args, context) => {
+    const room = requireRoom(context); if (args.length !== 1) return { kind: "ERROR", content: "Usage: /owner <nick>" };
+    const member = await deps.repository.transferRoomOwnership(room.id, args[0]!);
+    return { kind: "SUCCESS", content: `*** ${member.userId === profile().id ? "Ownership retained." : `${args[0]!.replace(/^@/, "")} is now Room Owner of #${room.name}.`}` };
+  } });
 
   registry.register({ name: "bans", usage: "/bans", description: "List active bans in the active channel.", handler: async (_args, context) => {
     const room = requireRoom(context); const items = await deps.repository.listRoomBans(room.id);

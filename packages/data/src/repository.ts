@@ -41,6 +41,9 @@ export interface HyperoomRepository {
   respondInvitation(invitationId: string, accept: boolean): Promise<HyperoomRoomInvitation>;
   moderateRoomMember(roomId: string, targetUsername: string, action: "kick" | "ban" | "unban", reason?: string): Promise<{ action: string; roomId: string; roomName: string; targetId: string; targetUsername: string; reason: string | null }>;
   listRoomBans(roomId: string): Promise<HyperoomRoomBan[]>;
+  transferRoomOwnership(roomId: string, targetUsername: string): Promise<HyperoomRoomMember>;
+  setRoomOperator(roomId: string, targetUsername: string, enabled: boolean): Promise<HyperoomRoomMember>;
+
   joinRoomByName(name: string): Promise<{ status: "allowed" | "locked" | "banned" | "not_found"; room: HyperoomRoom | null }>;
   subscribeMyInvitations(onChange: (items: HyperoomRoomInvitation[]) => void): RealtimeChannel;
   subscribeRoom(roomId: string, handlers: RealtimeHandlers): RealtimeChannel;
@@ -70,7 +73,11 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
       if (input.isLocked !== undefined) next.is_locked = input.isLocked;
       const { data, error } = await client.from("rooms").update(next).eq("id", roomId).select("*").single(); if (error) throw error; return room(data);
     },
-    async updateRoomTopic(roomId, topic) { return this.updateRoom(roomId, { topic }); },
+    async updateRoomTopic(roomId, topic) {
+      const { data, error } = await client.rpc("update_room_topic", { p_room_id: roomId, p_topic: topic });
+      if (error) throw error;
+      return room(data);
+    },
     async joinRoom(roomId, userId) {
       const id = await requireUserId(client, userId);
       const { data, error } = await client.from("room_members").upsert({ room_id: roomId, user_id: id, role: "member" }, { onConflict: "room_id,user_id", ignoreDuplicates: true }).select("*").maybeSingle();
@@ -97,6 +104,18 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
     async respondInvitation(invitationId, accept) { await requireUserId(client); const { data, error } = await client.rpc("respond_room_invitation", { p_invitation_id: invitationId, p_accept: accept }); if (error) throw error; return invitation(data); },
     async moderateRoomMember(roomId, targetUsername, action, reason) { await requireUserId(client); const { data, error } = await client.rpc("moderate_room_member", { p_room_id: roomId, p_target_username: targetUsername.replace(/^@/, ""), p_action: action, p_reason: reason?.trim() || null }); if (error) throw error; const row = data?.[0]; if (!row) throw new Error("Moderation action failed."); return { action: row.action, roomId: row.room_id, roomName: row.room_name, targetId: row.target_id, targetUsername: row.target_username, reason: row.reason }; },
     async listRoomBans(roomId) { await requireUserId(client); const { data, error } = await client.rpc("list_room_bans", { p_room_id: roomId }); if (error) throw error; return (data ?? []).map(ban); },
+    async transferRoomOwnership(roomId, targetUsername) {
+      const { data, error } = await client.rpc("transfer_room_ownership", { p_room_id: roomId, p_target_username: targetUsername.replace(/^@/, "") });
+      if (error) throw error;
+      const row = data?.[0]; if (!row) throw new Error("Ownership transfer failed.");
+      return member(row);
+    },
+    async setRoomOperator(roomId, targetUsername, enabled) {
+      const { data, error } = await client.rpc("set_room_operator", { p_room_id: roomId, p_target_username: targetUsername.replace(/^@/, ""), p_enabled: enabled });
+      if (error) throw error;
+      const row = data?.[0]; if (!row) throw new Error("Operator change failed.");
+      return member(row);
+    },
     async joinRoomByName(name) { const { data, error } = await client.rpc("join_room_by_name", { p_name: name }); if (error) throw error; const row = data?.[0]; if (!row?.status || row.status === "not_found") return { status: "not_found", room: null }; if (row.status === "locked") return { status: "locked", room: null }; if (row.status === "banned") return { status: "banned", room: null }; return { status: "allowed", room: { id: row.room_id!, name: row.room_name!, type: row.type!, description: row.description, topic: row.topic, isLocked: row.is_locked!, createdBy: row.created_by!, createdAt: row.created_at!, updatedAt: row.updated_at! } }; },
     subscribeMyInvitations(onChange) { const channel = client.channel("room-invitations:mine"); const refresh = () => { void this.listMyInvitations().then(onChange); }; channel.on("postgres_changes", { event: "*", schema: "public", table: "room_invitations" }, refresh); void channel.subscribe(); return channel; },
     subscribePublicRooms(onChange) { const channel = client.channel("rooms:public"); channel.on("postgres_changes", { event: "*", schema: "public", table: "rooms" }, () => { void this.listPublicRooms().then(onChange); }); void channel.subscribe(); return channel; },

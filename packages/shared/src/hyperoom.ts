@@ -1,8 +1,8 @@
 export type HyperoomRoomType = "public" | "private" | "dm" | "group";
 export type HyperoomPlatformRole = "owner" | "admin" | "moderator" | "member";
-export type HyperoomMemberRole = "owner" | "admin" | "operator" | "voice" | "member";
+export type HyperoomMemberRole = "owner" | "operator" | "voice" | "member";
 export type MessageKind = "text" | "action" | "system";
-export type HyperoomMessageEventType = "create" | "join" | "part" | "quit" | "topic" | "nick" | "action" | "lock" | "unlock" | "kick" | "ban" | "unban";
+export type HyperoomMessageEventType = "create" | "join" | "part" | "quit" | "topic" | "nick" | "action" | "lock" | "unlock" | "kick" | "ban" | "unban" | "invite" | "op" | "deop" | "owner";
 export type HyperoomRoomInvitationStatus = "pending" | "accepted" | "declined" | "revoked";
 
 export interface HyperoomProfile {

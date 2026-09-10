@@ -53,6 +53,9 @@ export interface Database {
       respond_room_invitation: { Args: { p_invitation_id: string; p_accept: boolean }; Returns: Database["public"]["Tables"]["room_invitations"]["Row"] };
       moderate_room_member: { Args: { p_room_id: string; p_target_username: string; p_action: string; p_reason?: string | null }; Returns: { action: string; room_id: string; room_name: string; target_id: string; target_username: string; reason: string | null }[] };
       list_room_bans: { Args: { p_room_id: string }; Returns: { id: string; room_id: string; user_id: string; username: string; banned_by: string; reason: string | null; created_at: string }[] };
+      update_room_topic: { Args: { p_room_id: string; p_topic?: string | null }; Returns: Database["public"]["Tables"]["rooms"]["Row"] };
+      transfer_room_ownership: { Args: { p_room_id: string; p_target_username: string }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
+      set_room_operator: { Args: { p_room_id: string; p_target_username: string; p_enabled: boolean }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
     };
     Enums: { room_type: HyperoomRoomType; platform_role: HyperoomPlatformRole; member_role: HyperoomMemberRole; message_kind: MessageKind; message_event_type: HyperoomMessageEventType };
     CompositeTypes: Record<string, never>;
