@@ -34,12 +34,14 @@ export function createHyperoomCommandEngine(deps: {
     return { kind: "SUCCESS", content: `Created #${room.name}. You are the Room Owner.`, room, data: { action: "switch-room" } };
   } });
 
-  registry.register({ name: "join", usage: "/join #channel", description: "Join a public channel and switch to it.", handler: async (args) => {
+  registry.register({ name: "join", usage: "/join #channel", description: "Join a channel according to its access policy and switch to it.", handler: async (args) => {
     if (args.length !== 1) return { kind: "ERROR", content: "Usage: /join #channel" };
-    const name = channelName(args[0]!); const room = await deps.repository.getRoomByName(name);
-    if (!room) return { kind: "ERROR", content: `Channel not found or access denied: #${name}` };
-    await deps.repository.joinRoom(room.id);
-    return { kind: "SUCCESS", content: `Joined #${room.name}`, room, data: { action: "switch-room" } };
+    const access = await deps.repository.joinRoomByName(args[0]!);
+    if (access.status === "not_found") return { kind: "ERROR", content: `Channel not found: ${args[0]}` };
+    if (access.status === "locked") return { kind: "ERROR", content: `*** #${args[0]!.replace(/^#/, "")} is locked.\n*** You need an invitation to join this room.` };
+    if (!access.room) return { kind: "ERROR", content: "Channel access could not be resolved." };
+    await deps.repository.joinRoom(access.room.id);
+    return { kind: "SUCCESS", content: `Joined #${access.room.name}`, room: access.room, data: { action: "switch-room" } };
   } });
 
   registry.register({ name: "part", usage: "/part", description: "Leave the active channel.", handler: async (_args, context) => {

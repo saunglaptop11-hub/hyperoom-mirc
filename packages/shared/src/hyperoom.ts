@@ -3,6 +3,7 @@ export type HyperoomPlatformRole = "owner" | "admin" | "moderator" | "member";
 export type HyperoomMemberRole = "owner" | "admin" | "operator" | "voice" | "member";
 export type MessageKind = "text" | "action" | "system";
 export type HyperoomMessageEventType = "create" | "join" | "part" | "quit" | "topic" | "nick" | "action" | "lock" | "unlock";
+export type HyperoomRoomInvitationStatus = "pending" | "accepted" | "declined" | "revoked";
 
 export interface HyperoomProfile {
   id: string; systemRole: HyperoomPlatformRole; username: string; displayName: string;
@@ -15,6 +16,7 @@ export interface HyperoomRoom {
 }
 export interface HyperoomRoomMember { roomId: string; userId: string; role: HyperoomMemberRole; joinedAt: string; }
 export interface HyperoomRoomMemberProfile extends HyperoomRoomMember { profile: HyperoomProfile; }
+export interface HyperoomRoomInvitation { id: string; roomId: string; inviterId: string; inviteeId: string; status: HyperoomRoomInvitationStatus; createdAt: string; respondedAt: string | null; room?: HyperoomRoom; inviter?: HyperoomProfile; invitee?: HyperoomProfile; }
 export interface HyperoomMessage {
   id: string; roomId: string; senderId: string; kind: MessageKind; eventType: HyperoomMessageEventType | null;
   content: string; replyToMessageId: string | null; createdAt: string; editedAt: string | null; deletedAt: string | null;

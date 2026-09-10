@@ -1,4 +1,4 @@
-import type { HyperoomMessage, HyperoomProfile, HyperoomReaction, HyperoomRoom, HyperoomRoomMember, HyperoomRoomMemberProfile, HyperoomMessageEventType } from "@hyperoom/shared";
+import type { HyperoomMessage, HyperoomProfile, HyperoomReaction, HyperoomRoom, HyperoomRoomMember, HyperoomRoomMemberProfile, HyperoomMessageEventType, HyperoomRoomInvitation } from "@hyperoom/shared";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { HyperoomSupabaseClient } from "./client";
 import type { Database } from "./database.types";
@@ -11,6 +11,7 @@ function profile(row: Database["public"]["Tables"]["profiles"]["Row"]): Hyperoom
 function room(row: Database["public"]["Tables"]["rooms"]["Row"]): HyperoomRoom { return { id: row.id, name: row.name, type: row.type, description: row.description, topic: row.topic, isLocked: row.is_locked, createdBy: row.created_by, createdAt: row.created_at, updatedAt: row.updated_at }; }
 function member(row: Database["public"]["Tables"]["room_members"]["Row"]): HyperoomRoomMember { return { roomId: row.room_id, userId: row.user_id, role: row.role, joinedAt: row.joined_at }; }
 function message(row: Database["public"]["Tables"]["messages"]["Row"]): HyperoomMessage { return { id: row.id, roomId: row.room_id, senderId: row.sender_id, kind: row.kind, eventType: row.event_type, content: row.content, replyToMessageId: row.reply_to_message_id, createdAt: row.created_at, editedAt: row.edited_at, deletedAt: row.deleted_at }; }
+function invitation(row: Database["public"]["Tables"]["room_invitations"]["Row"]): HyperoomRoomInvitation { return { id: row.id, roomId: row.room_id, inviterId: row.inviter_id, inviteeId: row.invitee_id, status: row.status, createdAt: row.created_at, respondedAt: row.responded_at }; }
 function reaction(row: Database["public"]["Tables"]["message_reactions"]["Row"]): HyperoomReaction { return { messageId: row.message_id, userId: row.user_id, emoji: row.emoji, createdAt: row.created_at }; }
 async function requireUserId(client: HyperoomSupabaseClient, userId?: string): Promise<string> { if (userId) return userId; const { data, error } = await client.auth.getUser(); if (error) throw error; if (!data.user) throw new Error("Authentication required."); return data.user.id; }
 
@@ -33,6 +34,12 @@ export interface HyperoomRepository {
   deleteMessage(messageId: string): Promise<void>;
   addReaction(messageId: string, emoji: string, userId?: string): Promise<HyperoomReaction>;
   removeReaction(messageId: string, emoji: string, userId?: string): Promise<void>;
+  searchProfiles(username: string): Promise<HyperoomProfile[]>;
+  createInvitation(roomId: string, inviteeId: string): Promise<HyperoomRoomInvitation>;
+  listMyInvitations(): Promise<HyperoomRoomInvitation[]>;
+  respondInvitation(invitationId: string, accept: boolean): Promise<HyperoomRoomInvitation>;
+  joinRoomByName(name: string): Promise<{ status: "allowed" | "locked" | "not_found"; room: HyperoomRoom | null }>;
+  subscribeMyInvitations(onChange: (items: HyperoomRoomInvitation[]) => void): RealtimeChannel;
   subscribeRoom(roomId: string, handlers: RealtimeHandlers): RealtimeChannel;
   subscribePublicRooms(onChange: (rooms: HyperoomRoom[]) => void): RealtimeChannel;
 }
@@ -51,7 +58,7 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
       const { data, error } = await client.from("rooms").insert({ name, type: input.type ?? "public", description: input.description?.trim() || null, topic: input.topic?.trim() || null, is_locked: input.isLocked ?? false, created_by: id }).select("*").single();
       if (error) throw error; const created = room(data); const actor = await this.getProfile(id); const event = await client.from("messages").insert({ room_id: created.id, sender_id: id, kind: "system", event_type: "create", content: `*** ${actor?.username ?? id.slice(0, 8)} created #${created.name}` }); if (event.error) throw event.error; return created;
     },
-    async getRoomByName(name) { const normalized = name.trim().replace(/^#/, ""); const { data, error } = await client.from("rooms").select("*").ilike("name", normalized).maybeSingle(); if (error) throw error; return data ? room(data) : null; },
+    async getRoomByName(name) { const access = await this.joinRoomByName(name); return access.room; },
     async updateRoom(roomId, input) {
       const next: Database["public"]["Tables"]["rooms"]["Update"] = {};
       if (input.name !== undefined) { const name = input.name.trim().replace(/^#/, ""); if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/.test(name)) throw new Error("Invalid room name. Use 1-32 letters, numbers, _ or -."); next.name = name; }
@@ -81,6 +88,12 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
     async deleteMessage(messageId) { const { error } = await client.from("messages").update({ deleted_at: new Date().toISOString() }).eq("id", messageId); if (error) throw error; },
     async addReaction(messageId, emoji, userId) { const id = await requireUserId(client, userId); const value = emoji.trim(); if (!value) throw new Error("Reaction emoji cannot be empty."); const { data, error } = await client.from("message_reactions").upsert({ message_id: messageId, user_id: id, emoji: value }, { onConflict: "message_id,user_id,emoji" }).select("*").single(); if (error) throw error; return reaction(data); },
     async removeReaction(messageId, emoji, userId) { const id = await requireUserId(client, userId); const { error } = await client.from("message_reactions").delete().eq("message_id", messageId).eq("user_id", id).eq("emoji", emoji); if (error) throw error; },
+    async searchProfiles(username) { const value = username.trim(); if (!value) return []; const { data, error } = await client.from("profiles").select("*").ilike("username", `%${value}%`).order("username").limit(10); if (error) throw error; return data.map(profile); },
+    async createInvitation(roomId, inviteeId) { const inviterId = await requireUserId(client); if (inviterId === inviteeId) throw new Error("You cannot invite yourself."); const { data, error } = await client.from("room_invitations").insert({ room_id: roomId, inviter_id: inviterId, invitee_id: inviteeId }).select("*").single(); if (error) throw error; return invitation(data); },
+    async listMyInvitations() { await requireUserId(client); const { data, error } = await client.rpc("list_my_room_invitations"); if (error) throw error; return (data ?? []).map((row) => ({ id: row.id, roomId: row.room_id, inviterId: row.inviter_id, inviteeId: "", status: row.status, createdAt: row.created_at, respondedAt: null, room: { id: row.room_id, name: row.room_name, type: "public", description: null, topic: null, isLocked: true, createdBy: "", createdAt: row.created_at, updatedAt: row.created_at }, inviter: { id: row.inviter_id, username: row.inviter_username, displayName: row.inviter_username, systemRole: "member", avatarUrl: null, bio: null, statusText: null, lastSeenAt: null, createdAt: row.created_at, updatedAt: row.created_at } })); },
+    async respondInvitation(invitationId, accept) { await requireUserId(client); const { data, error } = await client.rpc("respond_room_invitation", { p_invitation_id: invitationId, p_accept: accept }); if (error) throw error; return invitation(data); },
+    async joinRoomByName(name) { const { data, error } = await client.rpc("join_room_by_name", { p_name: name }); if (error) throw error; const row = data?.[0]; if (!row?.status || row.status === "not_found") return { status: "not_found", room: null }; if (row.status === "locked") return { status: "locked", room: null }; return { status: "allowed", room: { id: row.room_id!, name: row.room_name!, type: row.type!, description: row.description, topic: row.topic, isLocked: row.is_locked!, createdBy: row.created_by!, createdAt: row.created_at!, updatedAt: row.updated_at! } }; },
+    subscribeMyInvitations(onChange) { const channel = client.channel("room-invitations:mine"); const refresh = () => { void this.listMyInvitations().then(onChange); }; channel.on("postgres_changes", { event: "*", schema: "public", table: "room_invitations" }, refresh); void channel.subscribe(); return channel; },
     subscribePublicRooms(onChange) { const channel = client.channel("rooms:public"); channel.on("postgres_changes", { event: "*", schema: "public", table: "rooms" }, () => { void this.listPublicRooms().then(onChange); }); void channel.subscribe(); return channel; },
     subscribeRoom(roomId, handlers) {
       const channel = client.channel(`room:${roomId}`);
