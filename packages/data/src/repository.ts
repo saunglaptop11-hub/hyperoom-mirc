@@ -24,6 +24,7 @@ export interface HyperoomRepository {
   createRoom(input: CreateRoomInput, userId?: string): Promise<HyperoomRoom>;
   getRoomByName(name: string): Promise<HyperoomRoom | null>;
   updateRoom(roomId: string, input: UpdateRoomInput): Promise<HyperoomRoom>;
+  deleteRoom(roomId: string): Promise<void>;
   updateRoomTopic(roomId: string, topic: string | null): Promise<HyperoomRoom>;
   joinRoom(roomId: string, userId?: string): Promise<HyperoomRoomMember>;
   leaveRoom(roomId: string, userId?: string): Promise<void>;
@@ -75,6 +76,7 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
       if (input.isLocked !== undefined) next.is_locked = input.isLocked;
       const { data, error } = await client.from("rooms").update(next).eq("id", roomId).select("*").single(); if (error) throw error; return room(data);
     },
+    async deleteRoom(roomId) { const { error } = await client.rpc("delete_room", { p_room_id: roomId }); if (error) throw error; },
     async updateRoomTopic(roomId, topic) {
       const { data, error } = await client.rpc("update_room_topic", { p_room_id: roomId, p_topic: topic });
       if (error) throw error;

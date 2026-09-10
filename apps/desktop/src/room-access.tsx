@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import type { HyperoomProfile, HyperoomRoom, HyperoomRoomInvitation } from "@hyperoom/shared";
 import type { HyperoomRepository } from "@hyperoom/data";
 
-type Props = { repository: HyperoomRepository; room: HyperoomRoom; profile: HyperoomProfile; members: { userId: string; role: string }[]; onRoomUpdated: (room: HyperoomRoom) => void };
+type Props = { repository: HyperoomRepository; room: HyperoomRoom; profile: HyperoomProfile; members: { userId: string; role: string }[]; onRoomUpdated: (room: HyperoomRoom) => void; onRoomDeleted?: (roomId: string) => void };
 
 function canManage(profile: HyperoomProfile, room: HyperoomRoom, members: Props["members"]): boolean {
   return profile.systemRole !== "member" || room.createdBy === profile.id || members.some((m) => m.userId === profile.id && m.role === "owner");
 }
 
-export function RoomAccessPanel({ repository, room, profile, members, onRoomUpdated }: Props): React.JSX.Element | null {
+export function RoomAccessPanel({ repository, room, profile, members, onRoomUpdated, onRoomDeleted }: Props): React.JSX.Element | null {
   const allowed = canManage(profile, room, members);
+  const canDelete = profile.systemRole === "owner";
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description ?? "");
@@ -26,6 +27,14 @@ export function RoomAccessPanel({ repository, room, profile, members, onRoomUpda
     catch (e) { setNotice(e instanceof Error ? e.message : "Could not save room settings."); }
     finally { setBusy(false); }
   }
+  async function deleteRoom() {
+    if (!canDelete) return;
+    const confirmed = window.confirm(`Delete #${room.name}? This permanently removes the room and its history.`);
+    if (!confirmed) return;
+    setBusy(true); setNotice(null);
+    try { await repository.deleteRoom(room.id); onRoomDeleted?.(room.id); }
+    catch (e) { setNotice(e instanceof Error ? e.message : "Could not delete room."); setBusy(false); }
+  }
   async function toggleLock() {
     setBusy(true); setNotice(null);
     try { const locked = !room.isLocked; const updated = await repository.updateRoom(room.id, { isLocked: locked }); await repository.sendMessage({ roomId: room.id, kind: "system", eventType: locked ? "lock" : "unlock", content: `*** ${profile.username} ${locked ? "locked" : "unlocked"} #${room.name}` }); onRoomUpdated(updated); setNotice(locked ? "Room locked. Existing members remain inside; new joins require an accepted invitation." : "Room unlocked. Public access is restored."); }
@@ -37,7 +46,7 @@ export function RoomAccessPanel({ repository, room, profile, members, onRoomUpda
   return <div className="room-access"><button className="ghost-button" onClick={() => setOpen(!open)}>{open ? "Close Room Controls" : "Room Controls"}</button>{open && <div className="room-access-panel">
     <div className="room-access-section"><strong>Room Settings</strong><label>Name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={32} /></label><label>Description<textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} /></label><label>Topic<input value={topic} onChange={(e) => setTopic(e.target.value)} maxLength={200} /></label><label>Access<select value={room.isLocked ? "locked" : "public"} onChange={(e) => void (e.target.value === (room.isLocked ? "locked" : "public") || toggleLock())}><option value="public">Public</option><option value="locked">Locked / Invite Only</option></select></label><button className="primary-button" disabled={busy} onClick={() => void save()}>Save Changes</button></div>
     <div className="room-access-section"><strong>Invite Member</strong><div className="invite-search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="username" onKeyDown={(e) => { if (e.key === "Enter") void search(); }} /><button className="ghost-button" onClick={() => void search()}>Search</button></div>{candidates.map((candidate) => <button className="invite-candidate" key={candidate.id} disabled={busy} onClick={() => void invite(candidate)}>@{candidate.username}<span>{candidate.displayName}</span><b>Invite</b></button>)}</div>
-    <div className="room-access-actions"><button className="ghost-button" disabled={busy} onClick={() => void toggleLock()}>{room.isLocked ? "Unlock Room" : "Lock Room"}</button>{notice && <span className="access-notice">{notice}</span>}</div>
+    <div className="room-access-actions"><button className="ghost-button" disabled={busy} onClick={() => void toggleLock()}>{room.isLocked ? "Unlock Room" : "Lock Room"}</button>{canDelete && <button className="danger-button" disabled={busy} onClick={() => void deleteRoom()}>Delete Room</button>}{notice && <span className="access-notice">{notice}</span>}</div>
   </div>}</div>;
 }
 
