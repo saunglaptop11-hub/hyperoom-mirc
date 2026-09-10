@@ -1,42 +1,66 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { loginHandler } from "../../api/auth/login.ts";
 import { signupHandler } from "../../api/auth/signup.ts";
 
-function localApi() {
+function localApi(serverEnv: Record<string, string>) {
   return {
     name: "hyperoom-local-api",
     configureServer(server: any) {
       const env = {
-        VITE_SUPABASE_URL: server.config.env.VITE_SUPABASE_URL,
-        SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+        VITE_SUPABASE_URL: serverEnv.VITE_SUPABASE_URL,
+        SUPABASE_SECRET_KEY: serverEnv.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SECRET_KEY,
       };
-      async function handleApi(handler: (request: Request, env: typeof process.env) => Promise<Response>, req: any, res: any) {
+      const fallbackAuthUrl = serverEnv.VITE_AUTH_FALLBACK_URL || "https://hyperoom-mirc.vercel.app";
+
+      async function handleApi(
+        handler: (request: Request, env: typeof process.env) => Promise<Response>,
+        req: any,
+        res: any,
+        allowProductionLoginFallback = false,
+      ) {
         if (req.method !== "POST") return;
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.from(chunk));
+        const body = Buffer.concat(chunks);
+        if (allowProductionLoginFallback && !env.SUPABASE_SECRET_KEY) {
+          const upstream = await fetch(`${fallbackAuthUrl}/api/auth/login`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body,
+          });
+          res.statusCode = upstream.status;
+          upstream.headers.forEach((value, key) => res.setHeader(key, value));
+          res.end(Buffer.from(await upstream.arrayBuffer()));
+          return;
+        }
         const request = new Request("http://localhost/api/auth", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: Buffer.concat(chunks),
+          body,
         });
         const response = await handler(request, env);
         res.statusCode = response.status;
         response.headers.forEach((value, key) => res.setHeader(key, value));
         res.end(Buffer.from(await response.arrayBuffer()));
       }
-      server.middlewares.use("/api/auth/login", (req: any, res: any) => handleApi(loginHandler, req, res));
+
+      server.middlewares.use("/api/auth/login", (req: any, res: any) => handleApi(loginHandler, req, res, true));
       server.middlewares.use("/api/auth/signup", (req: any, res: any) => handleApi(signupHandler, req, res));
     },
   };
 }
 
-export default defineConfig({
-  plugins: [react(), localApi()],
-  root: ".",
-  envDir: "../..",
-  build: {
-    outDir: "dist/renderer",
-    emptyOutDir: true,
-  },
+export default defineConfig(({ mode }) => {
+  const serverEnv = loadEnv(mode, "../..", "");
+
+  return {
+    plugins: [react(), localApi(serverEnv)],
+    root: ".",
+    envDir: "../..",
+    build: {
+      outDir: "dist/renderer",
+      emptyOutDir: true,
+    },
+  };
 });
