@@ -105,3 +105,5 @@ code { color: #cbd2de; }
 .system-message .message-body time { margin-left: 10px; color: #4f5866; font-size: 9px; }
 .system-event { white-space: pre-wrap; }
 .system-error { color: #e7b8b8; white-space: pre-wrap; }
+
+.online-count,.global-online,.room-state{display:inline-flex;align-items:center;gap:5px}.online-dot{width:7px;height:7px;border-radius:50%;display:inline-block}.global-online{font-size:12px;font-weight:700;opacity:.85}.room-state{margin-left:auto;font-size:11px;opacity:.75}.room-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

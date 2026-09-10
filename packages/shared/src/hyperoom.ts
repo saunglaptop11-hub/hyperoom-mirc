@@ -2,7 +2,7 @@ export type HyperoomRoomType = "public" | "private" | "dm" | "group";
 export type HyperoomPlatformRole = "owner" | "admin" | "moderator" | "member";
 export type HyperoomMemberRole = "owner" | "admin" | "operator" | "voice" | "member";
 export type MessageKind = "text" | "action" | "system";
-export type HyperoomMessageEventType = "join" | "part" | "quit" | "topic" | "nick" | "action";
+export type HyperoomMessageEventType = "create" | "join" | "part" | "quit" | "topic" | "nick" | "action" | "lock" | "unlock";
 
 export interface HyperoomProfile {
   id: string; systemRole: HyperoomPlatformRole; username: string; displayName: string;
@@ -11,7 +11,7 @@ export interface HyperoomProfile {
 }
 export interface HyperoomRoom {
   id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null;
-  createdBy: string; createdAt: string; updatedAt: string;
+  isLocked: boolean; createdBy: string; createdAt: string; updatedAt: string;
 }
 export interface HyperoomRoomMember { roomId: string; userId: string; role: HyperoomMemberRole; joinedAt: string; }
 export interface HyperoomRoomMemberProfile extends HyperoomRoomMember { profile: HyperoomProfile; }
@@ -21,7 +21,8 @@ export interface HyperoomMessage {
 }
 export interface HyperoomReaction { messageId: string; userId: string; emoji: string; createdAt: string; }
 export type HyperoomPresenceStatus = "online" | "offline";
-export interface HyperoomPresence { userId: string; status: HyperoomPresenceStatus; lastSeenAt: string | null; typingRoomId?: string; }
+export interface HyperoomPresence { userId: string; status: HyperoomPresenceStatus; lastSeenAt: string | null; typingRoomId?: string; activeRoomId?: string | null; }
+export interface HyperoomPresenceSnapshot { globalCount: number; roomCounts: Record<string, number>; }
 export type HyperoomEvent =
   | { type: "room.created"; room: HyperoomRoom }
   | { type: "room.member.joined"; member: HyperoomRoomMember }

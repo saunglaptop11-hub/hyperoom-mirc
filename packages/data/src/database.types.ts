@@ -10,9 +10,9 @@ export interface Database {
         Relationships: [];
       };
       rooms: {
-        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null; created_by: string; created_at: string; updated_at: string };
-        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; created_by: string };
-        Update: { name?: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null };
+        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null; is_locked: boolean; created_by: string; created_at: string; updated_at: string };
+        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean; created_by: string };
+        Update: { name?: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean };
         Relationships: [];
       };
       room_members: {
