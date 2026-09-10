@@ -145,3 +145,6 @@ code { color: #cbd2de; }
 .member-profile-popover span, .member-profile-popover small { color: #8997aa; }
 .member-profile-popover p { margin: 8px 0 0; color: #c2ccd9; font-size: 12px; line-height: 1.45; }
 .profile-close { position: absolute; top: 5px; right: 6px; border: 0; background: transparent; color: #8997aa; cursor: pointer; }
+
+.member-online-dot { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: #3d4653; opacity: .65; }
+.member-online-dot.online { background: #6fdb8f; opacity: 1; box-shadow: 0 0 0 2px rgba(111, 219, 143, .08); }
