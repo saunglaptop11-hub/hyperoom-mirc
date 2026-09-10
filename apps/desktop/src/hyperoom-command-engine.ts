@@ -38,6 +38,15 @@ export function createHyperoomCommandEngine(deps: {
     return { kind: "SUCCESS", content: `Created #${room.name}. You are the Room Owner.`, room, data: { action: "switch-room" } };
   } });
 
+  registry.register({ name: "msg", usage: "/msg <nick> <message>", description: "Open a private conversation and send a direct message.", handler: async (args) => {
+    if (args.length < 2) return { kind: "ERROR", content: "Usage: /msg <nick> <message>" };
+    const target = args[0]!.replace(/^@/, ""); const content = args.slice(1).join(" ").trim();
+    if (!target || !content) return { kind: "ERROR", content: "Usage: /msg <nick> <message>" };
+    const room = await deps.repository.openDirectMessage(target);
+    await deps.repository.sendMessage({ roomId: room.id, content });
+    return { kind: "SUCCESS", content: `*** Private message sent to @${target}`, room, data: { action: "switch-room" } };
+  } });
+
   registry.register({ name: "join", usage: "/join #channel", description: "Join a channel according to its access policy and switch to it.", handler: async (args) => {
     if (args.length !== 1) return { kind: "ERROR", content: "Usage: /join #channel" };
     const access = await deps.repository.joinRoomByName(args[0]!);

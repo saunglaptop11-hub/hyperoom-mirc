@@ -8,9 +8,9 @@ function deps() {
   return {
     repository: {
       getProfile: vi.fn().mockResolvedValue(profile), upsertProfile: vi.fn(), updateUsername: vi.fn().mockResolvedValue({ ...profile, username: "newnick", updatedAt: "2026-01-02" }),
-      listPublicRooms: vi.fn(), createRoom: vi.fn().mockResolvedValue(room), getRoomByName: vi.fn().mockResolvedValue(room), joinRoomByName: vi.fn().mockResolvedValue({ status: "allowed", room }), updateRoom: vi.fn().mockResolvedValue({ ...room, isLocked: true }), updateRoomTopic: vi.fn().mockResolvedValue({ ...room, topic: "New topic" }),
+      listPublicRooms: vi.fn(), listDirectRooms: vi.fn().mockResolvedValue([]), createRoom: vi.fn().mockResolvedValue(room), getRoomByName: vi.fn().mockResolvedValue(room), joinRoomByName: vi.fn().mockResolvedValue({ status: "allowed", room }), updateRoom: vi.fn().mockResolvedValue({ ...room, isLocked: true }), updateRoomTopic: vi.fn().mockResolvedValue({ ...room, topic: "New topic" }),
       joinRoom: vi.fn().mockResolvedValue({ roomId: "r1", userId: "u1", role: "member", joinedAt: "2026-01-01" }), leaveRoom: vi.fn().mockResolvedValue(undefined), listMembers: vi.fn(), listMemberProfiles: vi.fn().mockResolvedValue([{ roomId: "r1", userId: "u1", role: "member", joinedAt: "2026-01-01", profile }]), listMessages: vi.fn(), moderateRoomMember: vi.fn().mockResolvedValue({ action: "kick", roomId: "r1", roomName: "general", targetId: "u2", targetUsername: "konoha", reason: null }), listRoomBans: vi.fn().mockResolvedValue([]), transferRoomOwnership: vi.fn().mockResolvedValue({ roomId: "r1", userId: "u2", role: "owner", joinedAt: "2026-01-01" }), setRoomOperator: vi.fn().mockResolvedValue({ roomId: "r1", userId: "u2", role: "operator", joinedAt: "2026-01-01" }),
-      sendMessage: vi.fn().mockResolvedValue({ id: "m1" }), editMessage: vi.fn(), deleteMessage: vi.fn(), addReaction: vi.fn(), removeReaction: vi.fn(), subscribeRoom: vi.fn(), subscribePublicRooms: vi.fn(),
+      sendMessage: vi.fn().mockResolvedValue({ id: "m1" }), openDirectMessage: vi.fn().mockResolvedValue({ ...room, id: "dm1", name: "dm-u2", type: "dm" }), closeDirectMessage: vi.fn().mockResolvedValue(undefined), editMessage: vi.fn(), deleteMessage: vi.fn(), addReaction: vi.fn(), removeReaction: vi.fn(), subscribeRoom: vi.fn(), subscribePublicRooms: vi.fn(),
     },
     auth: { getSession: vi.fn(), signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn().mockResolvedValue(undefined), onAuthStateChange: vi.fn() },
     getProfile: () => profile,
@@ -31,11 +31,13 @@ describe("Hyperoom command handlers", () => {
 });
 
 
-describe("phase 3-4 command scope", () => {
-  it("does not expose Phase 5 private messaging", async () => {
+describe("phase 5 direct messaging", () => {
+  it("opens a private conversation and sends through the shared message pipeline", async () => {
     const d = deps(); const engine = createHyperoomCommandEngine(d);
     const result = await engine.execute("/msg konoha hello", { currentRoom: room, nickname: profile.username });
-    expect(result.kind).toBe("ERROR");
-    expect(result.content).toContain("Unknown command");
+    expect(d.repository.openDirectMessage).toHaveBeenCalledWith("konoha");
+    expect(d.repository.sendMessage).toHaveBeenCalledWith({ roomId: "dm1", content: "hello" });
+    expect(result.kind).toBe("SUCCESS");
+    expect(result.room?.type).toBe("dm");
   });
 });
