@@ -8,8 +8,10 @@ type Props = {
   actor: HyperoomProfile;
   target: HyperoomRoomMemberProfile;
   actorRoomRole: string | null;
+  online: boolean;
   onMention: (username: string) => void;
   onChanged: () => void;
+  onDirectMessage: (room: HyperoomRoom) => void;
 };
 
 function platformLevel(role: HyperoomProfile["systemRole"]): number { return role === "owner" ? 40 : role === "admin" ? 30 : role === "moderator" ? 20 : 10; }
@@ -22,7 +24,7 @@ export function canModerateTarget(actor: HyperoomProfile, actorRoomRole: string 
   return ["owner", "operator"].includes(actorRoomRole) && target.role !== "owner" && roomLevel(actorRoomRole) > roomLevel(target.role);
 }
 
-export function MemberContextMenu({ repository, room, actor, target, actorRoomRole, onMention, onChanged }: Props): React.JSX.Element {
+export function MemberContextMenu({ repository, room, actor, target, actorRoomRole, online, onMention, onChanged, onDirectMessage }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,7 +55,7 @@ export function MemberContextMenu({ repository, room, actor, target, actorRoomRo
     </button>
     {open && <div className="member-context-menu" onClick={(event) => event.stopPropagation()}>
       <button onClick={() => { setProfileOpen(true); setOpen(false); }}>View Profile</button>
-      <button onClick={() => { onMention(target.profile.username); setOpen(false); }}>Mention</button>
+      <button onClick={() => { onMention(target.profile.username); setOpen(false); }}>Mention</button>{actor.id !== target.userId && <button disabled={busy} onClick={() => void repository.openDirectMessage(target.profile.username).then((next) => { onDirectMessage(next); setOpen(false); }).catch((e) => setError(e instanceof Error ? e.message : "Could not open DM."))}>Message</button>}
       {canInvite && <button onClick={() => void run(() => repository.createInvitation(room.id, target.userId))}>Invite</button>}
       {canModerate && <button disabled={busy} onClick={() => void run(() => repository.moderateRoomMember(room.id, target.profile.username, "kick"))}>Kick</button>}
       {canModerate && <button disabled={busy} onClick={() => void run(() => repository.moderateRoomMember(room.id, target.profile.username, "ban"))}>Ban</button>}
@@ -62,6 +64,6 @@ export function MemberContextMenu({ repository, room, actor, target, actorRoomRo
       {canTransfer && <button disabled={busy} onClick={() => void run(() => repository.transferRoomOwnership(room.id, target.profile.username))}>Transfer Ownership</button>}
       {error && <span className="member-context-error">{error}</span>}
     </div>}
-    {profileOpen && <div className="member-profile-popover" onClick={(event) => event.stopPropagation()}><button className="profile-close" onClick={() => setProfileOpen(false)}>Ã—</button><div className="member-avatar large">{target.profile.displayName.slice(0, 1).toUpperCase()}</div><strong>{target.profile.displayName}</strong><span>@{target.profile.username}</span><small>Room role: {target.role}</small>{target.profile.bio && <p>{target.profile.bio}</p>}</div>}
+    {profileOpen && <div className="member-profile-popover" onClick={(event) => event.stopPropagation()}><button className="profile-close" onClick={() => setProfileOpen(false)}>Ã—</button><div className="member-avatar large">{target.profile.displayName.slice(0, 1).toUpperCase()}</div><strong>{target.profile.displayName}</strong><span>@{target.profile.username}</span><small>Room role: {target.role}</small><small>{online ? "Online now" : target.profile.lastSeenAt ? `Last seen ${new Date(target.profile.lastSeenAt).toLocaleString()}` : "Last seen unavailable"}</small>{target.profile.statusText && <small>Status: {target.profile.statusText}</small>}{target.profile.bio && <p>{target.profile.bio}</p>}</div>}
   </div>;
 }

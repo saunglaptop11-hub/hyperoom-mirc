@@ -13,7 +13,7 @@ export interface HyperoomProfile {
 }
 export interface HyperoomRoom {
   id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null;
-  isLocked: boolean; lifecycle: HyperoomRoomLifecycle; lastActivityAt: string; createdBy: string; createdAt: string; updatedAt: string;
+  isLocked: boolean; lifecycle: HyperoomRoomLifecycle; lastActivityAt: string; createdBy: string; createdAt: string; updatedAt: string; directPeer?: HyperoomProfile | null;
 }
 export interface HyperoomRoomMember { roomId: string; userId: string; role: HyperoomMemberRole; joinedAt: string; }
 export interface HyperoomRoomMemberProfile extends HyperoomRoomMember { profile: HyperoomProfile; }
