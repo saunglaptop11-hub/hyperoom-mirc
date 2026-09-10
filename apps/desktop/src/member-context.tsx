@@ -28,7 +28,7 @@ export function MemberContextMenu({ repository, room, actor, target, actorRoomRo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isOwnerAuthority = actor.systemRole === "owner" || actorRoomRole === "owner";
-  const canInvite = actor.systemRole !== "member" || actorRoomRole === "owner" || actorRoomRole === "operator";
+  const canInvite = actor.systemRole === "owner" || actorRoomRole === "owner";
   const canModerate = canModerateTarget(actor, actorRoomRole, target);
   const canGrant = isOwnerAuthority && target.role !== "owner" && target.role !== "operator";
   const canRevoke = isOwnerAuthority && target.role === "operator";
@@ -49,7 +49,7 @@ export function MemberContextMenu({ repository, room, actor, target, actorRoomRo
 
   return <div className="member-context-wrap" onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); setOpen(true); setError(null); }}>
     <button className="member-context-trigger" onClick={(event) => { event.stopPropagation(); setOpen((value) => !value); }} aria-label={`Actions for ${target.profile.username}`}>
-      ⋯
+      â‹¯
     </button>
     {open && <div className="member-context-menu" onClick={(event) => event.stopPropagation()}>
       <button onClick={() => { setProfileOpen(true); setOpen(false); }}>View Profile</button>
@@ -62,6 +62,6 @@ export function MemberContextMenu({ repository, room, actor, target, actorRoomRo
       {canTransfer && <button disabled={busy} onClick={() => void run(() => repository.transferRoomOwnership(room.id, target.profile.username))}>Transfer Ownership</button>}
       {error && <span className="member-context-error">{error}</span>}
     </div>}
-    {profileOpen && <div className="member-profile-popover" onClick={(event) => event.stopPropagation()}><button className="profile-close" onClick={() => setProfileOpen(false)}>×</button><div className="member-avatar large">{target.profile.displayName.slice(0, 1).toUpperCase()}</div><strong>{target.profile.displayName}</strong><span>@{target.profile.username}</span><small>Room role: {target.role}</small>{target.profile.bio && <p>{target.profile.bio}</p>}</div>}
+    {profileOpen && <div className="member-profile-popover" onClick={(event) => event.stopPropagation()}><button className="profile-close" onClick={() => setProfileOpen(false)}>Ã—</button><div className="member-avatar large">{target.profile.displayName.slice(0, 1).toUpperCase()}</div><strong>{target.profile.displayName}</strong><span>@{target.profile.username}</span><small>Room role: {target.role}</small>{target.profile.bio && <p>{target.profile.bio}</p>}</div>}
   </div>;
 }

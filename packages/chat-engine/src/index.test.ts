@@ -40,3 +40,13 @@ describe("HyperoomChatEngine", () => {
     expect(addReaction).toHaveBeenCalledWith("m1", "❤️");
   });
 });
+
+
+describe("message mutation identity", () => {
+  it("passes a caller-supplied id through to persistence", async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ id: "client-1" });
+    const engine = new HyperoomChatEngine({ joinRoom: vi.fn(), leaveRoom: vi.fn(), sendMessage, editMessage: vi.fn(), deleteMessage: vi.fn(), addReaction: vi.fn(), removeReaction: vi.fn() });
+    await engine.sendMessage({ id: "client-1", roomId: "r1", content: "retry-safe" });
+    expect(sendMessage).toHaveBeenCalledWith({ id: "client-1", roomId: "r1", content: "retry-safe" });
+  });
+});

@@ -29,3 +29,13 @@ describe("Hyperoom command handlers", () => {
   it("supports creating a room", async () => { const d = deps(); const engine = createHyperoomCommandEngine(d); const result = await engine.execute("/create #new-room", { currentRoom: null, nickname: profile.username }); expect(d.repository.createRoom).toHaveBeenCalledWith(expect.objectContaining({ name: "new-room", type: "public", isLocked: false })); expect(result.room).toEqual(room); });
   it("quit signs out after emitting a real quit event", async () => { const d = deps(); const engine = createHyperoomCommandEngine(d); const result = await engine.execute("/quit", { currentRoom: room, nickname: profile.username }); expect(d.repository.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ kind: "system", eventType: "quit" })); expect(d.auth.signOut).toHaveBeenCalled(); expect(result.kind).toBe("SUCCESS"); });
 });
+
+
+describe("phase 3-4 command scope", () => {
+  it("does not expose Phase 5 private messaging", async () => {
+    const d = deps(); const engine = createHyperoomCommandEngine(d);
+    const result = await engine.execute("/msg konoha hello", { currentRoom: room, nickname: profile.username });
+    expect(result.kind).toBe("ERROR");
+    expect(result.content).toContain("Unknown command");
+  });
+});

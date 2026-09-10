@@ -17,6 +17,7 @@ export interface ChatRepositoryPort {
 export interface SendMessageInput {
   roomId: string;
   content: string;
+  id?: string;
   kind?: "text" | "action" | "system";
   replyToMessageId?: string | null;
 }

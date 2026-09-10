@@ -214,3 +214,21 @@ code { color: #cbd2de; }
 .message-meta strong { color:var(--identity-color,#dce0e7); }
 .message.mine .message-meta { justify-content:flex-end; }
 .message { contain:layout paint; }
+.room-section-title { padding:12px 8px 6px; color:#6f7888; font-size:9px; font-weight:900; letter-spacing:.12em; }
+.private-title { margin-top:8px; border-top:1px solid #20242c; }
+.room-empty { padding:8px; color:#555e6d; font-size:10px; }
+.dm-item > span:first-child { color:#9aa5b7; }
+.dm-label { color:#596171 !important; font-size:8px !important; letter-spacing:.08em; }
+.dm-unread { min-width:20px; padding:2px 6px; border-radius:999px; background:#e8ebf1; color:#101216 !important; font-size:9px !important; font-weight:900; text-align:center; }
+.member-role-badge { flex:0 0 auto; }
+@media (max-width:1250px) { .workspace-body { grid-template-columns:255px minmax(0,1fr) 275px; } }
+
+/* Final sidebar layout: prioritize readable room/member names over chat width. */
+.workspace-body { grid-template-columns: 285px minmax(0,1fr) 300px; }
+.room-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.member-copy { min-width:0; overflow:hidden; }
+.member-copy strong, .member-copy span { max-width:100%; }
+.member-role-badge { max-width:112px; }
+.member-context-wrap { flex:0 0 20px; }
+@media (max-width:1250px) { .workspace-body { grid-template-columns:265px minmax(0,1fr) 285px; } }
+@media (max-width:900px) { .workspace-body { grid-template-columns:220px minmax(0,1fr) 245px; } }
