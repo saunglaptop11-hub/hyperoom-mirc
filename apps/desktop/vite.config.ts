@@ -30,8 +30,13 @@ function localApi(serverEnv: Record<string, string>) {
             body,
           });
           res.statusCode = upstream.status;
-          upstream.headers.forEach((value, key) => res.setHeader(key, value));
-          res.end(Buffer.from(await upstream.arrayBuffer()));
+          upstream.headers.forEach((value, key) => {
+            if (key === "content-encoding" || key === "content-length" || key === "transfer-encoding") return;
+            res.setHeader(key, value);
+          });
+          const upstreamBody = Buffer.from(await upstream.arrayBuffer());
+          res.setHeader("content-length", upstreamBody.length);
+          res.end(upstreamBody);
           return;
         }
         const request = new Request("http://localhost/api/auth", {
