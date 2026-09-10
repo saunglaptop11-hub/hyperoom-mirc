@@ -6,11 +6,10 @@ export function OnlineBadge({ count }: { count: number }): React.JSX.Element {
 }
 
 export function RoomStateLabel({ room, count }: { room: HyperoomRoom; count: number }): React.JSX.Element {
-  return <span className="room-state"><span>{room.isLocked ? "🔒" : "●"}</span><OnlineBadge count={count} /></span>;
+  const lifecycle = room.lifecycle === "permanent" ? "👑 Permanent" : room.lifecycle === "archived" ? "📦 Archived" : null;
+  return <span className="room-state"><span>{lifecycle ?? (room.isLocked ? "🔒" : "●")}</span><OnlineBadge count={count} /></span>;
 }
 
 export function GlobalOnline({ count }: { count: number }): React.JSX.Element {
   return <span className="global-online"><span className="online-dot" />{count} Online</span>;
 }
-
-// realtime presence source of truth

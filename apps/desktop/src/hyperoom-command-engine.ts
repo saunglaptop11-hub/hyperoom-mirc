@@ -40,6 +40,7 @@ export function createHyperoomCommandEngine(deps: {
     if (access.status === "not_found") return { kind: "ERROR", content: `Channel not found: ${args[0]}` };
     if (access.status === "locked") return { kind: "ERROR", content: `*** #${args[0]!.replace(/^#/, "")} is locked.\n*** You need an invitation to join this room.` };
     if (access.status === "banned") return { kind: "ERROR", content: `*** You are banned from #${args[0]!.replace(/^#/, "")}.` };
+    if (access.status === "archived") return { kind: "ERROR", content: `*** #${args[0]!.replace(/^#/, "")} is archived. Use /restore #channel if you have authority.` };
     if (!access.room) return { kind: "ERROR", content: "Channel access could not be resolved." };
     await deps.repository.joinRoom(access.room.id);
     return { kind: "SUCCESS", content: `Joined #${access.room.name}`, room: access.room, data: { action: "switch-room" } };
@@ -116,6 +117,14 @@ export function createHyperoomCommandEngine(deps: {
     const room = requireRoom(context); const items = await deps.repository.listRoomBans(room.id);
     if (!items.length) return { kind: "SYSTEM_EVENT", content: `No active bans in #${room.name}.` };
     return { kind: "SYSTEM_EVENT", content: `Active bans in #${room.name}:\\n${items.map((item) => `@${item.username}${item.reason ? ` — ${item.reason}` : ""}`).join("\\n")}` };
+  } });
+
+  registry.register({ name: "restore", usage: "/restore #channel", description: "Restore an archived channel (authorized users only).", handler: async (args) => {
+    if (args.length !== 1) return { kind: "ERROR", content: "Usage: /restore #channel" };
+    const name = channelName(args[0]!); const room = await deps.repository.getRoomByName(name);
+    if (!room) return { kind: "ERROR", content: `Channel not found: #${name}` };
+    const restored = await deps.repository.restoreRoom(room.id);
+    return { kind: "SUCCESS", content: `#${restored.name} restored.`, room: restored, data: { action: "switch-room" } };
   } });
 
   registry.register({ name: "room", usage: "/room name|description <value>", description: "Edit the active room name or description.", handler: async (args, context) => {

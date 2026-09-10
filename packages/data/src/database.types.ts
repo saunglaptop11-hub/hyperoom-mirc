@@ -10,9 +10,9 @@ export interface Database {
         Relationships: [];
       };
       rooms: {
-        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null; is_locked: boolean; created_by: string; created_at: string; updated_at: string };
-        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean; created_by: string };
-        Update: { name?: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean };
+        Row: { id: string; name: string; type: HyperoomRoomType; description: string | null; topic: string | null; is_locked: boolean; lifecycle_status: "active" | "archived" | "permanent"; last_activity_at: string; created_by: string; created_at: string; updated_at: string };
+        Insert: { id?: string; name: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean; lifecycle_status?: "active" | "archived" | "permanent"; last_activity_at?: string; created_by: string };
+        Update: { name?: string; type?: HyperoomRoomType; description?: string | null; topic?: string | null; is_locked?: boolean; lifecycle_status?: "active" | "archived" | "permanent"; last_activity_at?: string };
         Relationships: [];
       };
       room_members: {
@@ -48,12 +48,15 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
-      join_room_by_name: { Args: { p_name: string }; Returns: { status: string; room_id: string | null; room_name: string | null; is_locked: boolean | null; description: string | null; topic: string | null; type: HyperoomRoomType | null; created_by: string | null; created_at: string | null; updated_at: string | null }[] };
+      join_room_by_name: { Args: { p_name: string }; Returns: { status: string; room_id: string | null; room_name: string | null; is_locked: boolean | null; description: string | null; topic: string | null; lifecycle_status: "active" | "archived" | "permanent" | null; last_activity_at: string | null; type: HyperoomRoomType | null; created_by: string | null; created_at: string | null; updated_at: string | null }[] };
       list_my_room_invitations: { Args: Record<string, never>; Returns: { id: string; room_id: string; room_name: string; inviter_id: string; inviter_username: string; status: HyperoomRoomInvitationStatus; created_at: string }[] };
       respond_room_invitation: { Args: { p_invitation_id: string; p_accept: boolean }; Returns: Database["public"]["Tables"]["room_invitations"]["Row"] };
       moderate_room_member: { Args: { p_room_id: string; p_target_username: string; p_action: string; p_reason?: string | null }; Returns: { action: string; room_id: string; room_name: string; target_id: string; target_username: string; reason: string | null }[] };
       list_room_bans: { Args: { p_room_id: string }; Returns: { id: string; room_id: string; user_id: string; username: string; banned_by: string; reason: string | null; created_at: string }[] };
       update_room_topic: { Args: { p_room_id: string; p_topic?: string | null }; Returns: Database["public"]["Tables"]["rooms"]["Row"] };
+      list_messages_before: { Args: { p_room_id: string; p_before: string; p_limit?: number }; Returns: Database["public"]["Tables"]["messages"]["Row"][] };
+      archive_inactive_rooms: { Args: { p_now?: string }; Returns: number };
+      restore_room: { Args: { p_room_id: string }; Returns: Database["public"]["Tables"]["rooms"]["Row"] };
       transfer_room_ownership: { Args: { p_room_id: string; p_target_username: string }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
       set_room_operator: { Args: { p_room_id: string; p_target_username: string; p_enabled: boolean }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
     };

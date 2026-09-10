@@ -23,6 +23,13 @@ describe("HyperoomChatEngine", () => {
     expect(sendMessage).not.toHaveBeenCalled();
   });
 
+  it("preserves reply target when sending", async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ id: "m2" });
+    const engine = new HyperoomChatEngine({ joinRoom: vi.fn(), leaveRoom: vi.fn(), sendMessage, editMessage: vi.fn(), deleteMessage: vi.fn(), addReaction: vi.fn(), removeReaction: vi.fn() });
+    await engine.sendMessage({ roomId: "r1", content: "reply", replyToMessageId: "m1" });
+    expect(sendMessage).toHaveBeenCalledWith({ roomId: "r1", content: "reply", replyToMessageId: "m1" });
+  });
+
   it("normalizes reactions", async () => {
     const addReaction = vi.fn().mockResolvedValue({ messageId: "m1" });
     const engine = new HyperoomChatEngine({
