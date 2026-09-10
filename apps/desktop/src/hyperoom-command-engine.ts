@@ -83,6 +83,22 @@ export function createHyperoomCommandEngine(deps: {
     return { kind: "SUCCESS", content: `#${room.name} is now unlocked.`, room: updated };
   } });
 
+  for (const moderation of ["kick", "ban", "unban"] as const) {
+    registry.register({ name: moderation, usage: `/${moderation} <username> [reason]`, description: moderation === "kick" ? "Remove a member from the active channel." : moderation === "ban" ? "Ban a user from the active channel." : "Remove an active room ban.", handler: async (args, context) => {
+      const room = requireRoom(context); if (!args.length) return { kind: "ERROR", content: `Usage: /${moderation} <username> [reason]` };
+      const target = args[0]!.replace(/^@/, ""); if (!target) return { kind: "ERROR", content: `Usage: /${moderation} <username> [reason]` };
+      const reason = args.slice(1).join(" ").trim() || undefined;
+      const result = await deps.repository.moderateRoomMember(room.id, target, moderation, reason);
+      return { kind: "SUCCESS", content: result.reason ? `*** ${result.action} ${result.targetUsername}: ${result.reason}` : `*** ${result.action} ${result.targetUsername}.` };
+    } });
+  }
+
+  registry.register({ name: "bans", usage: "/bans", description: "List active bans in the active channel.", handler: async (_args, context) => {
+    const room = requireRoom(context); const items = await deps.repository.listRoomBans(room.id);
+    if (!items.length) return { kind: "SYSTEM_EVENT", content: `No active bans in #${room.name}.` };
+    return { kind: "SYSTEM_EVENT", content: `Active bans in #${room.name}:\\n${items.map((item) => `@${item.username}${item.reason ? ` — ${item.reason}` : ""}`).join("\\n")}` };
+  } });
+
   registry.register({ name: "room", usage: "/room name|description <value>", description: "Edit the active room name or description.", handler: async (args, context) => {
     const room = requireRoom(context); const [field, ...rest] = args; const value = rest.join(" ").trim();
     if (!field || !value || !["name", "description"].includes(field.toLowerCase())) return { kind: "ERROR", content: "Usage: /room name <name> OR /room description <text>" };

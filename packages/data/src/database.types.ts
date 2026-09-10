@@ -33,6 +33,12 @@ export interface Database {
         Update: { status?: HyperoomRoomInvitationStatus; responded_at?: string | null };
         Relationships: [];
       };
+      room_bans: {
+        Row: { id: string; room_id: string; user_id: string; banned_by: string; reason: string | null; created_at: string; revoked_at: string | null };
+        Insert: { id?: string; room_id: string; user_id: string; banned_by: string; reason?: string | null; created_at?: string; revoked_at?: string | null };
+        Update: { reason?: string | null; revoked_at?: string | null };
+        Relationships: [];
+      };
       message_reactions: {
         Row: { message_id: string; user_id: string; emoji: string; created_at: string };
         Insert: { message_id: string; user_id: string; emoji: string };
@@ -45,6 +51,8 @@ export interface Database {
       join_room_by_name: { Args: { p_name: string }; Returns: { status: string; room_id: string | null; room_name: string | null; is_locked: boolean | null; description: string | null; topic: string | null; type: HyperoomRoomType | null; created_by: string | null; created_at: string | null; updated_at: string | null }[] };
       list_my_room_invitations: { Args: Record<string, never>; Returns: { id: string; room_id: string; room_name: string; inviter_id: string; inviter_username: string; status: HyperoomRoomInvitationStatus; created_at: string }[] };
       respond_room_invitation: { Args: { p_invitation_id: string; p_accept: boolean }; Returns: Database["public"]["Tables"]["room_invitations"]["Row"] };
+      moderate_room_member: { Args: { p_room_id: string; p_target_username: string; p_action: string; p_reason?: string | null }; Returns: { action: string; room_id: string; room_name: string; target_id: string; target_username: string; reason: string | null }[] };
+      list_room_bans: { Args: { p_room_id: string }; Returns: { id: string; room_id: string; user_id: string; username: string; banned_by: string; reason: string | null; created_at: string }[] };
     };
     Enums: { room_type: HyperoomRoomType; platform_role: HyperoomPlatformRole; member_role: HyperoomMemberRole; message_kind: MessageKind; message_event_type: HyperoomMessageEventType };
     CompositeTypes: Record<string, never>;
