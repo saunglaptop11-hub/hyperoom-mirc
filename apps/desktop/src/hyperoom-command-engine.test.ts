@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createHyperoomCommandEngine } from "./hyperoom-command-engine";
 import type { HyperoomProfile, HyperoomRoom } from "@hyperoom/shared";
 
-const profile: HyperoomProfile = { id: "u1", systemRole: "member", username: "calculus_1987", displayName: "Calculus", avatarUrl: null, bio: null, statusText: null, lastSeenAt: null, createdAt: "2026-01-01", updatedAt: "2026-01-01" };
+const profile: HyperoomProfile = { id: "u1", systemRole: "member", username: "calculus_1987", displayName: "Calculus", avatarUrl: null, bio: null, statusText: null, lastSeenAt: null, lastRoomId: null, createdAt: "2026-01-01", updatedAt: "2026-01-01" };
 const room: HyperoomRoom = { id: "r1", name: "general", type: "public", description: null, topic: "Welcome", isLocked: false, lifecycle: "active", lastActivityAt: "2026-01-01", createdBy: "u1", createdAt: "2026-01-01", updatedAt: "2026-01-01" };
 function deps() {
   return {

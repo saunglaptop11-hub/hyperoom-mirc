@@ -8,7 +8,7 @@ export type HyperoomRoomInvitationStatus = "pending" | "accepted" | "declined" |
 
 export interface HyperoomProfile {
   id: string; systemRole: HyperoomPlatformRole; username: string; displayName: string;
-  avatarUrl: string | null; bio: string | null; statusText: string | null; lastSeenAt: string | null;
+  avatarUrl: string | null; bio: string | null; statusText: string | null; lastSeenAt: string | null; lastRoomId: string | null;
   createdAt: string; updatedAt: string;
 }
 export interface HyperoomRoom {

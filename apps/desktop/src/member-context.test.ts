@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { HyperoomProfile, HyperoomRoomMemberProfile } from "@hyperoom/shared";
 import { canModerateTarget } from "./member-context";
 
-const profile = (id: string, username: string, systemRole: HyperoomProfile["systemRole"] = "member"): HyperoomProfile => ({ id, systemRole, username, displayName: username, avatarUrl: null, bio: null, statusText: null, lastSeenAt: null, createdAt: "2026-01-01", updatedAt: "2026-01-01" });
+const profile = (id: string, username: string, systemRole: HyperoomProfile["systemRole"] = "member"): HyperoomProfile => ({ id, systemRole, username, displayName: username, avatarUrl: null, bio: null, statusText: null, lastSeenAt: null, lastRoomId: null, createdAt: "2026-01-01", updatedAt: "2026-01-01" });
 const target = (id: string, username: string, role: HyperoomRoomMemberProfile["role"], systemRole: HyperoomProfile["systemRole"] = "member"): HyperoomRoomMemberProfile => ({ roomId: "r1", userId: id, role, joinedAt: "2026-01-01", profile: profile(id, username, systemRole) });
 
 describe("room authority context rules", () => {
