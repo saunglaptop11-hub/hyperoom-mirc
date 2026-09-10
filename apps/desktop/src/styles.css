@@ -170,3 +170,17 @@ code { color: #cbd2de; }
 .member-role-badge.voice { border-color: var(--muted); }
 .danger-button { border: 1px solid #7f3030; background: transparent; color: #ff8f8f; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
 .danger-button:disabled { opacity: .5; cursor: not-allowed; }
+
+.guide-button { width:28px; height:28px; border:1px solid #303743; border-radius:8px; background:#11151b; color:#c9d0db; cursor:pointer; font-weight:800; }
+.composer-wrap { position:relative; }
+.command-autocomplete,.command-guide { position:absolute; left:18px; right:96px; bottom:58px; z-index:25; padding:8px; border:1px solid #2b313c; border-radius:10px; background:#11151b; box-shadow:0 16px 40px rgba(0,0,0,.4); }
+.command-autocomplete { display:grid; gap:2px; }
+.command-autocomplete button,.command-guide-list button { display:grid; gap:2px; border:0; background:transparent; color:#dce2eb; text-align:left; padding:7px 9px; border-radius:6px; cursor:pointer; }
+.command-autocomplete button:hover,.command-guide-list button:hover { background:#1c222b; }
+.command-autocomplete span,.command-guide-list span { color:#7e8796; font-size:9px; }
+.command-guide { max-height:65vh; overflow:auto; }
+.command-guide-header { display:flex; justify-content:space-between; align-items:center; padding:3px 4px 8px; color:#dfe4ec; font-size:11px; }
+.command-guide-header button { border:0; background:transparent; color:#9ca5b4; cursor:pointer; font-size:16px; }
+.command-guide-list { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+.command-guide > small { display:block; margin:8px 4px 2px; color:#697383; }
+@media (max-width: 800px) { .command-guide-list { grid-template-columns:1fr; } .command-autocomplete,.command-guide { left:8px; right:8px; } }

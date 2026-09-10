@@ -4,7 +4,7 @@ import {
   type ClientCommandContext,
 } from "@hyperoom/irc-engine";
 import type { AuthApi, HyperoomRepository } from "@hyperoom/data";
-import type { HyperoomProfile, HyperoomRoom } from "@hyperoom/shared";
+import type { HyperoomMessage, HyperoomProfile, HyperoomRoom } from "@hyperoom/shared";
 
 const CHANNEL_NAME = /^#?[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
 const NICKNAME = /^[A-Za-z0-9_]{2,24}$/;
@@ -26,7 +26,11 @@ export function createHyperoomCommandEngine(deps: {
   const registry = createClientCommandRegistry();
   const profile = () => deps.getProfile();
 
-  registry.register({ name: "help", usage: "/help", description: "Show available Hyperoom commands.", handler: () => ({ kind: "SYSTEM_EVENT", content: registry.all().map((item) => `${item.usage} — ${item.description}`).join("\n") }) });
+  registry.register({ name: "help", usage: "/help [command]", description: "Show available commands or detailed help for one command.", handler: (args) => {
+    if (args.length > 1) return { kind: "ERROR", content: "Usage: /help [command]" };
+    if (args.length === 1) { const item = registry.get(args[0]!); if (!item) return { kind: "ERROR", content: `No help available for /${args[0]!.toLowerCase()}.` }; return { kind: "SYSTEM_EVENT", content: `*** /${item.name}\nUsage: ${item.usage}\n${item.description}` }; }
+    return { kind: "SYSTEM_EVENT", content: `*** HYPEROOM COMMAND GUIDE\n\n${registry.all().map((item) => `${item.usage} — ${item.description}`).join("\n")}\n\nTip: /help <command> shows detailed usage.` };
+  } });
 
   registry.register({ name: "create", usage: "/create #channel", description: "Create a public channel and become its Room Owner.", handler: async (args) => {
     if (args.length < 1) return { kind: "ERROR", content: "Usage: /create #channel" };
@@ -55,6 +59,15 @@ export function createHyperoomCommandEngine(deps: {
   registry.register({ name: "quit", usage: "/quit", description: "End the authenticated chat session.", handler: async (_args, context) => {
     if (context.currentRoom) await deps.repository.sendMessage({ roomId: context.currentRoom.id, kind: "system", eventType: "quit", content: `*** ${profile().username} quit` });
     await deps.auth.signOut(); return { kind: "SUCCESS", content: "Disconnected from Hyperoom.", data: { action: "session-ended" } };
+  } });
+
+  registry.register({ name: "msg", usage: "/msg <username> <message>", description: "Open a real private 1:1 conversation and send the message there.", handler: async (args, _context) => {
+    if (args.length < 2) return { kind: "ERROR", content: "Usage: /msg <username> <message>" };
+    const target = args[0]!.replace(/^@/, ""); const text = args.slice(1).join(" ").trim();
+    if (!target || !text) return { kind: "ERROR", content: "Usage: /msg <username> <message>" };
+    const dmRoom = await deps.repository.openDirectMessage(target);
+    const message = await deps.repository.sendMessage({ roomId: dmRoom.id, content: text });
+    return { kind: "SUCCESS", content: `Private message sent to @${target}.`, room: dmRoom, data: { action: "switch-room", private: true, targetUsername: target, message: message as HyperoomMessage } };
   } });
 
   registry.register({ name: "me", usage: "/me <action>", description: "Send an IRC-style action message.", handler: async (args, context) => {

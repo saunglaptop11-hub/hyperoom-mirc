@@ -58,6 +58,7 @@ export interface Database {
       archive_inactive_rooms: { Args: { p_now?: string }; Returns: number };
       restore_room: { Args: { p_room_id: string }; Returns: Database["public"]["Tables"]["rooms"]["Row"] };
       delete_room: { Args: { p_room_id: string }; Returns: undefined };
+      open_direct_message: { Args: { p_target_username: string }; Returns: Database["public"]["Tables"]["rooms"]["Row"] };
       transfer_room_ownership: { Args: { p_room_id: string; p_target_username: string }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
       set_room_operator: { Args: { p_room_id: string; p_target_username: string; p_enabled: boolean }; Returns: Database["public"]["Tables"]["room_members"]["Row"][] };
     };

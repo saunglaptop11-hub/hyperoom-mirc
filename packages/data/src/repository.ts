@@ -46,6 +46,7 @@ export interface HyperoomRepository {
   transferRoomOwnership(roomId: string, targetUsername: string): Promise<HyperoomRoomMember>;
   setRoomOperator(roomId: string, targetUsername: string, enabled: boolean): Promise<HyperoomRoomMember>;
   restoreRoom(roomId: string): Promise<HyperoomRoom>;
+  openDirectMessage(username: string): Promise<HyperoomRoom>;
 
   joinRoomByName(name: string): Promise<{ status: "allowed" | "locked" | "banned" | "archived" | "not_found"; room: HyperoomRoom | null }>;
   subscribeMyInvitations(onChange: (items: HyperoomRoomInvitation[]) => void): RealtimeChannel;
@@ -116,6 +117,7 @@ export function createHyperoomRepository(client: HyperoomSupabaseClient): Hypero
       return member(row);
     },
     async restoreRoom(roomId) { const { data, error } = await client.rpc("restore_room", { p_room_id: roomId }); if (error) throw error; return room(data); },
+    async openDirectMessage(username) { const { data, error } = await client.rpc("open_direct_message", { p_target_username: username.replace(/^@/, "") }); if (error) throw error; if (!data) throw new Error("Private conversation could not be opened."); return room(data); },
     async setRoomOperator(roomId, targetUsername, enabled) {
       const { data, error } = await client.rpc("set_room_operator", { p_room_id: roomId, p_target_username: targetUsername.replace(/^@/, ""), p_enabled: enabled });
       if (error) throw error;

@@ -64,6 +64,9 @@ export function createClientCommandRegistry(): ClientCommandRegistry {
 export class ClientCommandEngine {
   constructor(private readonly registry: ClientCommandRegistry) {}
 
+  getCommands(): ClientCommandDefinition[] { return this.registry.all(); }
+  getCommand(name: string): ClientCommandDefinition | undefined { return this.registry.get(name); }
+
   async execute(input: string, context: ClientCommandContext): Promise<CommandResult> {
     const parsed = parseClientCommand(input);
     if (parsed.type === "normal") {
