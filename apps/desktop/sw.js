@@ -1,2 +1,29 @@
-self.addEventListener("push",e=>{let d={title:"HYPEROOM",body:"New activity",notificationId:null,payload:{}};try{if(e.data)d={...d,...e.data.json()}}catch(_){}e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:"/favicon.ico",badge:"/favicon.ico",tag:d.notificationId||"hyperoom",data:d.payload||{},renotify:true,vibrate:[120,80,120]}))});
-self.addEventListener("notificationclick",e=>{e.notification.close();e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(xs=>{const c=xs.find(x=>"focus"in x);if(c){c.focus();c.postMessage({type:"OPEN_NOTIFICATION_CONTEXT",payload:e.notification.data});return}return clients.openWindow("/")}))});
+self.addEventListener("install", (event) => event.waitUntil(self.skipWaiting()));
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+self.addEventListener("push", (event) => {
+  let data = { title: "HYPEROOM", body: "New activity", notificationId: null, payload: {} };
+  try { if (event.data) data = { ...data, ...event.data.json() }; } catch (_) {}
+  event.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    tag: data.notificationId || "hyperoom",
+    renotify: true,
+    data: data.payload || {},
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const payload = event.notification.data || {};
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clients) => {
+    const current = clients.find((client) => "focus" in client);
+    if (current) {
+      await current.focus();
+      current.postMessage({ type: "OPEN_NOTIFICATION_CONTEXT", payload });
+      return;
+    }
+    await self.clients.openWindow("/");
+  }));
+});
