@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "apps/desktop/dist/renderer",
   "crons": [
-    { "path": "/api/cron/archive-rooms", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/archive-rooms", "schedule": "0 3 * * *" }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
