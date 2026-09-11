@@ -22,7 +22,24 @@ export function createPresenceApi(client: HyperoomSupabaseClient): PresenceApi {
     subscribeGlobalPresence(userId, onChange, onStatus) {
       const channel = client.channel("hyperoom:presence", { config: { presence: { key: userId } } });
       channel.on("presence", { event: "sync" }, () => syncCount(channel, onChange));
-      void channel.subscribe(async (status) => { onStatus?.(status); if (status === "SUBSCRIBED") await channel.track({ userId, onlineAt: new Date().toISOString() }); });
+      const subscribe = () => {
+        void channel.subscribe(async (status) => {
+          // Mobile browsers can suspend the WebSocket while a PWA is minimized.
+          // Do not forward that transient lifecycle state as a user-facing error.
+          if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT") onStatus?.(status);
+          if (status === "SUBSCRIBED") await channel.track({ userId, onlineAt: new Date().toISOString() });
+        });
+      };
+      subscribe();
+      const handleVisibility = () => {
+        if (document.visibilityState === "visible" && (channel as unknown as { state?: string }).state !== "joined") subscribe();
+      };
+      document.addEventListener("visibilitychange", handleVisibility);
+      const originalUnsubscribe = channel.unsubscribe.bind(channel);
+      channel.unsubscribe = (...args: Parameters<typeof originalUnsubscribe>) => {
+        document.removeEventListener("visibilitychange", handleVisibility);
+        return originalUnsubscribe(...args);
+      };
       return channel;
     },
     subscribeRoomPresence(roomId, userId, onChange, onStatus, onUsersChange) {
