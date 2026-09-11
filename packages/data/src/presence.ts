@@ -20,13 +20,13 @@ export function createPresenceApi(client: HyperoomSupabaseClient): PresenceApi {
   };
   return {
     subscribeGlobalPresence(userId, onChange, onStatus) {
-      const channel = client.channel("hyperoom:presence", { config: { private: true, presence: { key: userId } } });
+      const channel = client.channel("hyperoom:presence", { config: { presence: { key: userId } } });
       channel.on("presence", { event: "sync" }, () => syncCount(channel, onChange));
       void channel.subscribe(async (status) => { onStatus?.(status); if (status === "SUBSCRIBED") await channel.track({ userId, onlineAt: new Date().toISOString() }); });
       return channel;
     },
     subscribeRoomPresence(roomId, userId, onChange, onStatus, onUsersChange) {
-      const channel = client.channel(`hyperoom:room:${roomId}:presence`, { config: { private: true, presence: { key: userId } } });
+      const channel = client.channel(`hyperoom:room:${roomId}:presence`, { config: { presence: { key: userId } } });
       channel.on("presence", { event: "sync" }, () => syncCount(channel, onChange, onUsersChange));
       void channel.subscribe((status) => onStatus?.(status)); return channel;
     },
