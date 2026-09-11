@@ -1,5 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { copyFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { loginHandler } from "../../api/auth/login.ts";
 import { signupHandler } from "../../api/auth/signup.ts";
 
@@ -59,8 +61,14 @@ function localApi(serverEnv: Record<string, string>) {
 export default defineConfig(({ mode }) => {
   const serverEnv = loadEnv(mode, "../..", "");
 
+  const serviceWorker = {
+    name: "hyperoom-service-worker",
+    closeBundle() {
+      copyFileSync(resolve(process.cwd(), "sw.js"), resolve(process.cwd(), "dist/renderer/sw.js"));
+    },
+  };
   return {
-    plugins: [react(), localApi(serverEnv)],
+    plugins: [react(), localApi(serverEnv), serviceWorker],
     root: ".",
     envDir: "../..",
     build: {
