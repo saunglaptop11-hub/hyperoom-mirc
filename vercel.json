@@ -4,7 +4,6 @@
   "outputDirectory": "apps/desktop/dist/renderer",
   "crons": [
     { "path": "/api/cron/archive-rooms", "schedule": "0 3 * * *" },
-    { "path": "/api/notifications-push", "schedule": "0 * * * *" }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
